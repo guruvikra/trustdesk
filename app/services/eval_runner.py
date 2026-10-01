@@ -179,4 +179,6 @@ class EvaluationRunner:
             "case_results": case_results
         }
 
+    run_benchmark = run_eval_suite
+
 eval_runner = EvaluationRunner()

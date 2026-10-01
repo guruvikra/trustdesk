@@ -27,11 +27,13 @@ def get_eval_run(eval_run_id: str):
 
         metrics = json.loads(row["metrics_json"])
         case_results = json.loads(row["case_results_json"])
+        passed = sum(1 for r in case_results if r.get("passed"))
         return EvalRunResponse(
             eval_run_id=row["eval_run_id"],
             started_at=row["started_at"],
             completed_at=row["completed_at"],
             total_cases=row["total_cases"],
+            passed_cases=passed,
             category_accuracy=metrics.get("category_accuracy", 0.0),
             priority_accuracy=metrics.get("priority_accuracy", 0.0),
             citation_coverage=metrics.get("citation_coverage", 0.0),
