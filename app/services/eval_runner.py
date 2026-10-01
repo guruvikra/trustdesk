@@ -174,6 +174,7 @@ class EvaluationRunner:
             "started_at": started_at,
             "completed_at": completed_at,
             "total_cases": total,
+            "passed_cases": sum(1 for r in case_results if r["passed"]),
             **metrics,
             "case_results": case_results
         }

@@ -179,6 +179,7 @@ class EvalRunResponse(BaseModel):
     started_at: str
     completed_at: str
     total_cases: int
+    passed_cases: int
     category_accuracy: float
     priority_accuracy: float
     citation_coverage: float
