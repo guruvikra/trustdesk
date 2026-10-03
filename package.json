@@ -1,0 +1,15 @@
+{
+  "name": "trustdesk-airtribe-capstone",
+  "version": "2.0.0",
+  "description": "TrustDesk: Enterprise AI Support Operations & Deflection Agent (Kelu Lite Architecture in Node.js)",
+  "scripts": {
+    "postinstall": "cd server && npm install && cd ../client && npm install",
+    "start": "cd server && npm start",
+    "dev": "cd server && npm run dev",
+    "dev:client": "cd client && npx vite",
+    "build": "cd client && npx vite build",
+    "test": "cd server && npm test"
+  },
+  "author": "Airtribe Capstone Submission",
+  "license": "MIT"
+}

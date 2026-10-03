@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TrustDesk - Enterprise AI Support Operations (Kelu Lite)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              kelu: {
+                50: '#F0F2FE',
+                100: '#E0E5FD',
+                500: '#343CED',
+                600: '#2A31D0',
+                700: '#2025B0'
+              },
+              surface: {
+                base: '#0B0F19',
+                sidebar: '#0E1424',
+                card: '#131B2E',
+                cardLight: '#18223A',
+                border: '#1E2B4A',
+                hover: '#1B2642'
+              }
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['JetBrains Mono', 'monospace']
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #0B0F19;
+        color: #F3F4F6;
+        font-family: 'Inter', sans-serif;
+      }
+      ::-webkit-scrollbar { width: 6px; height: 6px; }
+      ::-webkit-scrollbar-track { background: #0B0F19; }
+      ::-webkit-scrollbar-thumb { background: #1E2B4A; border-radius: 3px; }
+      ::-webkit-scrollbar-thumb:hover { background: #343CED; }
+    </style>
+  </head>
+  <body class="bg-surface-base text-gray-100 antialiased overflow-hidden">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
