@@ -48,6 +48,17 @@ def ingest_helpdesk_webhook(source: str, payload: Dict[str, Any]):
     cust_id = f"cus_{uuid.uuid4().hex[:6]}"
     now = datetime.datetime.now(datetime.timezone.utc).isoformat()
 
+    # Automated Triage & Draft
+    combined = f"{subject} {body}"
+    guard_res = guardrail_service.check_input_safety(combined)
+    candidates = search_lexical_candidates(combined, limit=4)
+    sanitized = guardrail_service.sanitize_retrieved_documents(candidates)
+    reranked = jev_reranker.rerank(combined, sanitized, top_k=2)
+
+    fake_ticket = {"subject": subject, "body": body}
+    triage = ai_adapter.generate_triage(fake_ticket, {"customer_id": cust_id}, None, reranked, guard_res)
+    draft = ai_adapter.generate_draft(fake_ticket, {"customer_id": cust_id}, None, reranked, guard_res)
+
     with db_session() as conn:
         # Check or create customer
         c_cur = conn.execute("SELECT customer_id FROM customers WHERE email = ?", (cust_email,))
@@ -63,26 +74,15 @@ def ingest_helpdesk_webhook(source: str, payload: Dict[str, Any]):
                 (cust_id, cust_email.split("@")[0].capitalize(), cust_email, now)
             )
 
-        # Insert Ticket
+        # Insert Ticket with triage data
         conn.execute(
             """
             INSERT INTO tickets
-            (ticket_id, customer_id, order_id, channel, subject, body, created_at, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'open')
+            (ticket_id, customer_id, order_id, channel, subject, body, created_at, status, triage_category, triage_priority, triage_escalation, triage_reason)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?)
             """,
-            (ticket_id, cust_id, order_id, source_lower, subject, body, now)
+            (ticket_id, cust_id, order_id, source_lower, subject, body, now, triage["category"], triage["priority"], 1 if triage["should_escalate"] else 0, triage["reason_summary"])
         )
-
-    # Automated Triage & Draft
-    combined = f"{subject} {body}"
-    guard_res = guardrail_service.check_input_safety(combined)
-    candidates = search_lexical_candidates(combined, limit=4)
-    sanitized = guardrail_service.sanitize_retrieved_documents(candidates)
-    reranked = jev_reranker.rerank(combined, sanitized, top_k=2)
-
-    fake_ticket = {"subject": subject, "body": body}
-    triage = ai_adapter.generate_triage(fake_ticket, {"customer_id": cust_id}, None, reranked, guard_res)
-    draft = ai_adapter.generate_draft(fake_ticket, {"customer_id": cust_id}, None, reranked, guard_res)
 
     return {
         "status": "success",

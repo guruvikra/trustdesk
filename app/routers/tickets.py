@@ -113,3 +113,43 @@ def create_ticket(ticket_in: TicketCreate):
         cursor = conn.execute("SELECT * FROM tickets WHERE ticket_id = ?", (ticket_id,))
         row = cursor.fetchone()
         return _format_ticket(row, conn)
+
+@router.post("/{ticket_id}/resolve")
+def resolve_ticket(ticket_id: str, payload: Optional[dict] = None):
+    """Mark ticket as resolved and record resolution event."""
+    with db_session() as conn:
+        cursor = conn.execute("SELECT * FROM tickets WHERE ticket_id = ?", (ticket_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail=f"Ticket '{ticket_id}' not found.")
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        conn.execute("UPDATE tickets SET status = 'resolved' WHERE ticket_id = ?", (ticket_id,))
+        cursor = conn.execute("SELECT * FROM tickets WHERE ticket_id = ?", (ticket_id,))
+        updated_row = cursor.fetchone()
+        return {
+            "status": "success",
+            "message": f"Ticket {ticket_id} resolved successfully.",
+            "ticket": _format_ticket(updated_row, conn),
+            "resolved_at": now
+        }
+
+@router.post("/{ticket_id}/escalate")
+def escalate_ticket(ticket_id: str, payload: Optional[dict] = None):
+    """Hand over ticket to human support specialist."""
+    with db_session() as conn:
+        cursor = conn.execute("SELECT * FROM tickets WHERE ticket_id = ?", (ticket_id,))
+        row = cursor.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail=f"Ticket '{ticket_id}' not found.")
+        now = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        reason = payload.get("reason", "Escalated by agent") if payload else "Escalated by agent"
+        conn.execute("UPDATE tickets SET status = 'escalated', triage_escalation = 1 WHERE ticket_id = ?", (ticket_id,))
+        cursor = conn.execute("SELECT * FROM tickets WHERE ticket_id = ?", (ticket_id,))
+        updated_row = cursor.fetchone()
+        return {
+            "status": "success",
+            "message": f"Ticket {ticket_id} escalated to human specialist.",
+            "ticket": _format_ticket(updated_row, conn),
+            "escalated_at": now,
+            "reason": reason
+        }
