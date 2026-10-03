@@ -10,6 +10,7 @@ from app.database import db_session
 from app.services.retrieval import search_lexical_candidates
 from app.services.jev_reranker import jev_reranker
 from app.services.guardrails import guardrail_service
+from app.services.sync_worker import sync_worker
 
 router = APIRouter(prefix="/documents", tags=["Knowledge Base"])
 
@@ -178,3 +179,60 @@ def crawl_url_knowledge(payload: Dict[str, Any]):
         "characters_indexed": len(clean_text[:20000]),
         "reranker": "Jev System One Indexed"
     }
+
+@router.post("/sync-async")
+def sync_knowledge_async(payload: Dict[str, Any]):
+    """
+    Asynchronously ingest knowledge (URL crawl, policy pack, or custom text)
+    via dedicated background worker to prevent server hanging.
+    """
+    source_type = payload.get("source_type", "pack")
+    source_name = payload.get("source_name") or payload.get("title") or payload.get("url") or "Enterprise Policy Pack"
+    job_id = sync_worker.submit_job(source_type, source_name, payload)
+    return {
+        "status": "queued",
+        "job_id": job_id,
+        "source_type": source_type,
+        "source_name": source_name,
+        "message": "Knowledge sync queued for background worker."
+    }
+
+@router.post("/upload-pdf-async")
+async def upload_pdf_async(
+    file: UploadFile = File(...),
+    doc_id: str = Form(None),
+    title: str = Form(None)
+):
+    """
+    Uploads PDF and delegates heavy page extraction, chunking, and embedding
+    to the background sync worker.
+    """
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+    content_bytes = await file.read()
+    job_id = sync_worker.submit_job("pdf", file.filename, {
+        "content_bytes": content_bytes,
+        "filename": file.filename,
+        "doc_id": doc_id,
+        "title": title
+    })
+    return {
+        "status": "queued",
+        "job_id": job_id,
+        "filename": file.filename,
+        "message": "PDF uploaded. Background worker processing pages & indexing vector cache."
+    }
+
+@router.get("/sync-jobs")
+def list_sync_jobs():
+    """List recent background sync worker jobs."""
+    return sync_worker.list_jobs()
+
+@router.get("/sync-jobs/{job_id}")
+def get_sync_job_status(job_id: str):
+    """Fetch status and progress telemetry for a sync worker job."""
+    job = sync_worker.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Sync job '{job_id}' not found.")
+    return job
+

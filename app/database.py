@@ -175,6 +175,19 @@ def init_db():
             metrics_json TEXT NOT NULL,
             case_results_json TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS sync_jobs (
+            job_id TEXT PRIMARY KEY,
+            source_type TEXT NOT NULL,
+            source_name TEXT NOT NULL,
+            status TEXT NOT NULL,
+            progress INTEGER NOT NULL DEFAULT 0,
+            stage TEXT NOT NULL DEFAULT 'queued',
+            chunks_indexed INTEGER NOT NULL DEFAULT 0,
+            logs_json TEXT NOT NULL DEFAULT '[]',
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            completed_at TEXT
+        );
         """)
 
         # FTS5 Virtual Table for Knowledge Base search

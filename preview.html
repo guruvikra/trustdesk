@@ -19,13 +19,13 @@
               700: '#4338CA',
             },
             surface: {
-              base: '#080C14',
+              base: '#070B13',
               sidebar: '#0C1220',
-              card: '#121A2C',
-              cardLight: '#182238',
-              border: '#1E2A44',
-              hover: '#1B263F',
-              accent: '#243252'
+              card: '#111A2D',
+              cardLight: '#16223B',
+              border: '#1E2C48',
+              hover: '#192640',
+              accent: '#233456'
             }
           },
           fontFamily: {
@@ -44,8 +44,8 @@
     body { font-family: 'Inter', sans-serif; }
     code, .font-mono { font-family: 'JetBrains Mono', monospace; }
     ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: #080C14; }
-    ::-webkit-scrollbar-thumb { background: #1E2A44; border-radius: 4px; }
+    ::-webkit-scrollbar-track { background: #070B13; }
+    ::-webkit-scrollbar-thumb { background: #1E2C48; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #334466; }
     .glow-indigo { box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.25); }
     .glow-emerald { box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25); }
@@ -56,11 +56,10 @@
 <body class="bg-surface-base text-gray-200 antialiased h-screen flex overflow-hidden selection:bg-indigo-600 selection:text-white">
 
   <!-- ======================================================== -->
-  <!-- FULLSCREEN AUTH / SIGN-IN VIEW (TOGGLEABLE)              -->
+  <!-- FULLSCREEN SAAS AUTH / SIGN-IN VIEW                      -->
   <!-- ======================================================== -->
   <div id="view-auth-screen" class="fixed inset-0 z-50 bg-surface-base flex items-center justify-center p-4 hidden">
     <div class="w-full max-w-md bg-surface-card border border-surface-border rounded-2xl p-8 shadow-2xl space-y-6 relative overflow-hidden">
-      <!-- Glow background -->
       <div class="absolute -top-24 -right-24 w-48 h-48 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none"></div>
       <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -69,12 +68,12 @@
           <i class="fa-solid fa-shield-halved text-white text-xl"></i>
         </div>
         <h2 class="text-xl font-bold text-white tracking-tight">Sign in to TrustDesk</h2>
-        <p class="text-xs text-gray-400">Enterprise AI Support Agent for Zendesk, Intercom & Webhooks</p>
+        <p class="text-xs text-gray-400">Enterprise AI Support Platform for Zendesk, Intercom & Webhooks</p>
       </div>
 
       <!-- Quick 1-Click Persona Logins -->
       <div class="space-y-2">
-        <label class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">1-Click Role Login</label>
+        <label class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">1-Click Role Access</label>
         <div class="grid grid-cols-2 gap-2 text-xs">
           <button onclick="loginAs('Owner', 'Alex Vance', 'AV', 'alex@acme.com')" class="p-2.5 rounded-lg bg-surface-base hover:bg-surface-hover border border-purple-500/40 text-left transition-all">
             <span class="font-bold text-white block">Alex Vance</span>
@@ -112,8 +111,8 @@
 
         <div class="p-3 bg-surface-base rounded-lg border border-surface-border flex items-center justify-between">
           <div>
-            <span class="text-white font-medium block">Clean Workspace Mode</span>
-            <span class="text-[10px] text-gray-400">Pristine zero-data tenant for client presentations</span>
+            <span class="text-white font-medium block">Fresh Onboarding Mode</span>
+            <span class="text-[10px] text-gray-400">Start with Step 1: Knowledge Base Sync</span>
           </div>
           <input type="checkbox" id="auth-clean-check" checked class="w-4 h-4 rounded text-indigo-600 accent-indigo-600 bg-surface-card border-surface-border cursor-pointer" />
         </div>
@@ -127,7 +126,7 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- LEFT VERTICAL B2B SAAS SIDEBAR (MY ASKAI & KAPA ARCH)     -->
+  <!-- LEFT VERTICAL B2B SAAS SIDEBAR                           -->
   <!-- ======================================================== -->
   <aside class="w-64 bg-surface-sidebar border-r border-surface-border flex flex-col justify-between shrink-0 select-none z-20">
     
@@ -163,26 +162,40 @@
       <!-- Navigation Links -->
       <nav class="px-2 space-y-4 text-xs overflow-y-auto max-h-[calc(100vh-230px)]">
         
-        <!-- Group 1: CONVERSATIONS & INBOX -->
+        <!-- Group 0: ONBOARDING FUNNEL -->
         <div>
-          <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Customer Support</span>
+          <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Getting Started</span>
           <div class="space-y-0.5">
-            <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-white bg-surface-card border border-surface-border/80 font-medium transition-all">
+            <button onclick="switchView('onboarding')" id="nav-onboarding" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-white bg-surface-card border border-surface-border/80 font-medium transition-all">
               <div class="flex items-center">
-                <i class="fa-solid fa-chart-pie w-5 text-indigo-400"></i>
-                <span>Operations Dashboard</span>
+                <i class="fa-solid fa-wand-magic-sparkles w-5 text-indigo-400"></i>
+                <span>Setup & Sync Wizard</span>
               </div>
-              <span class="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-400 font-mono">Home</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-mono" id="sidebar-onboard-step">Step 1</span>
             </button>
+          </div>
+        </div>
 
+        <!-- Group 1: CORE HELPDESK OPERATIONS -->
+        <div>
+          <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Helpdesk & Support</span>
+          <div class="space-y-0.5">
             <button onclick="switchView('desk')" id="nav-desk" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
               <div class="flex items-center">
                 <i class="fa-solid fa-inbox w-5 text-indigo-400"></i>
-                <span>Conversations Inbox</span>
+                <span>Helpdesk Inbox</span>
               </div>
               <div class="flex items-center space-x-1">
                 <span class="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300" id="sidebar-ticket-count">0</span>
               </div>
+            </button>
+
+            <button onclick="switchView('deflector')" id="nav-deflector" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
+              <div class="flex items-center">
+                <i class="fa-solid fa-comment-dots w-5 text-teal-400"></i>
+                <span>Support Widget Preview</span>
+              </div>
+              <span class="text-[9px] text-teal-400 font-mono">Live</span>
             </button>
 
             <button onclick="switchView('playground')" id="nav-playground" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
@@ -193,19 +206,18 @@
               <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">Kapa</span>
             </button>
 
-            <button onclick="switchView('deflector')" id="nav-deflector" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
               <div class="flex items-center">
-                <i class="fa-solid fa-shield-cat w-5 text-teal-400"></i>
-                <span>Deflection & Widget</span>
+                <i class="fa-solid fa-chart-pie w-5 text-purple-400"></i>
+                <span>Operations Dashboard</span>
               </div>
-              <span class="text-[9px] text-teal-400 font-mono" id="sidebar-deflection-stat">--</span>
             </button>
           </div>
         </div>
 
-        <!-- Group 2: KNOWLEDGE & AI AGENT -->
+        <!-- Group 2: KNOWLEDGE & ASYNC SYNC WORKER -->
         <div>
-          <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Knowledge & Grounding</span>
+          <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Knowledge & Sync Worker</span>
           <div class="space-y-0.5">
             <button onclick="switchView('kb')" id="nav-kb" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
               <div class="flex items-center">
@@ -215,9 +227,17 @@
               <span class="text-[10px] font-mono text-gray-400" id="sidebar-doc-count">0 docs</span>
             </button>
 
+            <button onclick="switchView('worker-jobs')" id="nav-worker-jobs" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
+              <div class="flex items-center">
+                <i class="fa-solid fa-microchip w-5 text-amber-400"></i>
+                <span>Sync Worker Tasks</span>
+              </div>
+              <span class="text-[9px] text-emerald-400 font-mono flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>Worker Active</span>
+            </button>
+
             <button onclick="switchView('gaps')" id="nav-gaps" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
               <div class="flex items-center">
-                <i class="fa-solid fa-wand-magic-sparkles w-5 text-amber-400"></i>
+                <i class="fa-solid fa-wand-magic-sparkles w-5 text-yellow-400"></i>
                 <span>Knowledge Gaps</span>
               </div>
               <span class="text-[9px] text-amber-400 font-mono">Improve</span>
@@ -225,24 +245,16 @@
           </div>
         </div>
 
-        <!-- Group 3: CHANNELS & WEBHOOKS -->
+        <!-- Group 3: CHANNELS & INTEGRATIONS -->
         <div>
-          <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Integrations & Webhooks</span>
+          <span class="px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Channels & Integrations</span>
           <div class="space-y-0.5">
             <button onclick="switchView('integrations')" id="nav-integrations" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
               <div class="flex items-center">
                 <i class="fa-solid fa-plug w-5 text-violet-400"></i>
                 <span>Inbound Webhooks</span>
               </div>
-              <span class="text-[9px] text-emerald-400 flex items-center"><i class="fa-solid fa-circle text-[6px] mr-1"></i>Active</span>
-            </button>
-
-            <button onclick="toggleWidgetPreview()" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
-              <div class="flex items-center">
-                <i class="fa-solid fa-comment-dots w-5 text-blue-400"></i>
-                <span>Live Chat Widget</span>
-              </div>
-              <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-400"></i>
+              <span class="text-[9px] text-emerald-400">Ready</span>
             </button>
           </div>
         </div>
@@ -254,9 +266,9 @@
             <button onclick="switchView('evals')" id="nav-evals" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
               <div class="flex items-center">
                 <i class="fa-solid fa-chart-line w-5 text-teal-400"></i>
-                <span>Eval Lab & Benchmark</span>
+                <span>Eval Lab Benchmark</span>
               </div>
-              <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold" id="sidebar-eval-badge">100%</span>
+              <span class="text-[9px] px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">100%</span>
             </button>
 
             <button onclick="switchView('staff')" id="nav-staff" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
@@ -264,7 +276,7 @@
                 <i class="fa-solid fa-users-gear w-5 text-purple-400"></i>
                 <span>Team & RBAC</span>
               </div>
-              <span class="text-[10px] font-mono text-purple-300" id="sidebar-staff-count">1 user</span>
+              <span class="text-[10px] font-mono text-purple-300">4 roles</span>
             </button>
 
             <button onclick="switchView('settings')" id="nav-settings" class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-gray-400 hover:text-gray-200 hover:bg-surface-hover transition-all">
@@ -281,13 +293,13 @@
 
     <!-- Sidebar Bottom: Active Persona & Sign Out -->
     <div class="p-3 border-t border-surface-border space-y-2">
-      <!-- Live Jev Engine Status Pill -->
+      <!-- Live Sync Worker & Jev Status -->
       <div class="p-2 rounded-lg bg-surface-base border border-surface-border/60 flex items-center justify-between text-[11px]">
         <div class="flex items-center space-x-1.5">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span class="text-gray-300 font-medium">Jev System One</span>
+          <span class="text-gray-300 font-medium">Sync Worker + Jev</span>
         </div>
-        <span class="text-emerald-400 font-mono font-bold text-[10px]">0.96 Score</span>
+        <span class="text-emerald-400 font-mono font-bold text-[10px]">Thread Ready</span>
       </div>
 
       <!-- User Profile Badge & Switcher -->
@@ -321,253 +333,268 @@
         <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
         <span class="text-gray-400">TrustDesk</span>
         <span class="text-gray-600">/</span>
-        <span class="text-white font-medium capitalize" id="breadcrumb-current">Operations Dashboard</span>
+        <span class="text-white font-medium capitalize" id="breadcrumb-current">Setup & Sync Wizard</span>
         <span id="breadcrumb-sub" class="hidden text-gray-400 font-mono">/ <span class="text-indigo-400">tkt_9001</span></span>
       </div>
 
-      <!-- MASTER WORKSPACE MODE TOGGLE (KEY SALES DEMO SWITCH) -->
+      <!-- WORKSPACE MODE TOGGLE -->
       <div class="flex items-center bg-surface-card border border-surface-border rounded-lg p-0.5 text-xs shadow-sm">
-        <button id="btn-mode-clean" onclick="setWorkspaceMode('clean')" class="px-3 py-1 rounded-md font-medium flex items-center space-x-1.5 transition-all bg-indigo-600 text-white shadow-sm" title="Zero preloaded data - pristine tenant ready for client presentations">
+        <button id="btn-mode-clean" onclick="setWorkspaceMode('clean')" class="px-3 py-1 rounded-md font-medium flex items-center space-x-1.5 transition-all bg-indigo-600 text-white shadow-sm" title="Pristine tenant starting with Knowledge Base Sync">
           <i class="fa-solid fa-sparkles text-[10px]"></i>
-          <span>Clean Workspace (Zero Data)</span>
+          <span>Clean Workspace (Sell Mode)</span>
         </button>
-        <button id="btn-mode-demo" onclick="setWorkspaceMode('demo')" class="px-3 py-1 rounded-md font-medium flex items-center space-x-1.5 transition-all text-gray-400 hover:text-white" title="Preload 8 tickets, triage, knowledge docs, and benchmarks for live presentation">
+        <button id="btn-mode-demo" onclick="setWorkspaceMode('demo')" class="px-3 py-1 rounded-md font-medium flex items-center space-x-1.5 transition-all text-gray-400 hover:text-white" title="Preload 8 tickets & synced knowledge docs">
           <i class="fa-solid fa-bolt text-[10px] text-amber-400"></i>
-          <span>Showcase Demo (8 Tickets)</span>
+          <span>Showcase Demo (Preloaded)</span>
         </button>
       </div>
 
-      <!-- Real-World Inbound Webhook Actions -->
+      <!-- Actions Header -->
       <div class="flex items-center space-x-2.5">
         <button onclick="openModal('modal-webhook-simulator')" class="px-3 py-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-600/20 flex items-center transition-all">
           <i class="fa-solid fa-bolt mr-1.5 text-amber-300"></i> Ingest Inbound Webhook
         </button>
-        <button onclick="switchView('playground')" class="px-3 py-1.5 bg-surface-card hover:bg-surface-hover border border-surface-border text-gray-200 rounded-lg text-xs font-medium flex items-center transition-all">
-          <i class="fa-solid fa-terminal mr-1.5 text-emerald-400"></i> Copilot Studio
+        <button onclick="toggleWidgetPreview()" class="px-3 py-1.5 bg-surface-card hover:bg-surface-hover border border-surface-border text-gray-200 rounded-lg text-xs font-medium flex items-center transition-all">
+          <i class="fa-solid fa-comment-dots mr-1.5 text-teal-400"></i> Support Widget
         </button>
       </div>
     </header>
 
     <!-- ======================================================== -->
-    <!-- VIEW 0: OPERATIONS DASHBOARD                             -->
+    <!-- VIEW 0: SAAS ONBOARDING & SETUP WIZARD                   -->
     <!-- ======================================================== -->
-    <main id="view-dashboard" class="flex-1 overflow-y-auto p-8 max-w-7xl w-full mx-auto space-y-6">
+    <main id="view-onboarding" class="flex-1 overflow-y-auto p-8 max-w-5xl w-full mx-auto space-y-6">
       
-      <!-- Welcome Header -->
-      <div class="flex items-start justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-white tracking-tight flex items-center">
-            <span>Welcome, <span id="dash-user-name">Alex</span></span>
-            <span class="ml-3 text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium flex items-center">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> AI Support Agent Active
-            </span>
-          </h1>
-          <p class="text-xs text-gray-400 mt-1">
-            Connected to Zendesk, Intercom, Freshdesk & Webhooks. Ready to triage, draft, and resolve inquiries.
-          </p>
-        </div>
-        <div class="text-right">
-          <span class="text-[11px] text-gray-400 block">Workspace Tenant: <strong class="text-white font-mono">acme-global</strong></span>
-          <span class="text-[10px] text-indigo-400 font-mono block mt-0.5">Role: <span id="dash-role-name">Owner</span></span>
-        </div>
-      </div>
-
-      <!-- Clean / Demo Banner Notice -->
-      <div id="dash-clean-banner" class="p-4 rounded-xl bg-gradient-to-r from-indigo-950/40 via-surface-card to-purple-950/40 border border-indigo-500/30 flex items-center justify-between shadow-sm">
-        <div class="flex items-center space-x-3">
-          <div class="w-9 h-9 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
-            <i class="fa-solid fa-sparkles text-indigo-400 text-sm"></i>
-          </div>
+      <!-- Wizard Progress Stepper -->
+      <div class="bg-surface-card border border-surface-border rounded-2xl p-6 shadow-xl space-y-6">
+        <div class="flex items-start justify-between">
           <div>
-            <h3 class="text-xs font-bold text-white">Clean Production Workspace (Zero Preloaded Tickets)</h3>
-            <p class="text-[11px] text-gray-400">
-              Pristine environment for onboarding clients. Tickets flow in via inbound webhooks and widget interactions.
+            <h1 class="text-xl font-bold text-white tracking-tight flex items-center">
+              <span>TrustDesk SaaS Setup & Onboarding</span>
+              <span class="ml-3 text-xs font-mono px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-medium">
+                Step-by-Step Flow
+              </span>
+            </h1>
+            <p class="text-xs text-gray-400 mt-1">
+              Add your knowledge base & let the background sync worker index it. Once synced, deploy the widget and resolve helpdesk tickets.
             </p>
           </div>
+          <div class="text-right">
+            <span class="text-xs font-mono text-emerald-400 font-bold" id="wizard-step-indicator">Step 1 of 3: Knowledge Base Sync</span>
+          </div>
         </div>
-        <div class="flex items-center space-x-2">
-          <button onclick="openModal('modal-webhook-simulator')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all">
-            <i class="fa-solid fa-bolt mr-1 text-amber-300"></i> Ingest Test Webhook
-          </button>
-          <button onclick="setWorkspaceMode('demo')" class="px-3 py-1.5 bg-surface-base hover:bg-surface-hover border border-surface-border text-gray-200 rounded-lg text-xs font-medium transition-all">
-            <i class="fa-solid fa-database mr-1 text-cyan-400"></i> Load Demo Dataset
-          </button>
+
+        <!-- Visual Stepper Progress Bar -->
+        <div class="grid grid-cols-3 gap-3 text-xs">
+          <!-- Step 1 Card -->
+          <div id="step-card-1" class="p-3.5 rounded-xl bg-surface-base border-2 border-indigo-500 shadow-lg shadow-indigo-500/10 space-y-1">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white flex items-center">
+                <span class="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] mr-1.5">1</span>
+                Knowledge Base Sync
+              </span>
+              <span class="text-[10px] font-mono text-indigo-400" id="step1-pill">Active</span>
+            </div>
+            <p class="text-[11px] text-gray-400">Upload PDF manuals, crawl URLs, or sync policy pack via Background Worker.</p>
+          </div>
+
+          <!-- Step 2 Card -->
+          <div id="step-card-2" class="p-3.5 rounded-xl bg-surface-base border border-surface-border space-y-1 opacity-60">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white flex items-center">
+                <span class="w-5 h-5 rounded-full bg-surface-card text-gray-400 flex items-center justify-center text-[10px] mr-1.5">2</span>
+                Deploy Chat Widget
+              </span>
+              <span class="text-[10px] font-mono text-gray-500" id="step2-pill">Locked</span>
+            </div>
+            <p class="text-[11px] text-gray-400">Embed self-service widget on website & test grounded answers.</p>
+          </div>
+
+          <!-- Step 3 Card -->
+          <div id="step-card-3" class="p-3.5 rounded-xl bg-surface-base border border-surface-border space-y-1 opacity-60">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white flex items-center">
+                <span class="w-5 h-5 rounded-full bg-surface-card text-gray-400 flex items-center justify-center text-[10px] mr-1.5">3</span>
+                Helpdesk Operations
+              </span>
+              <span class="text-[10px] font-mono text-gray-500" id="step3-pill">Locked</span>
+            </div>
+            <p class="text-[11px] text-gray-400">Receive inbound webhook tickets and 1-click resolve with AI drafts.</p>
+          </div>
         </div>
       </div>
 
-      <div id="dash-demo-banner" class="hidden p-4 rounded-xl bg-gradient-to-r from-emerald-950/40 via-surface-card to-teal-950/40 border border-emerald-500/30 flex items-center justify-between shadow-sm">
-        <div class="flex items-center space-x-3">
-          <div class="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center shrink-0">
-            <i class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
-          </div>
+      <!-- STEP 1 CONTENT: BACKGROUND SYNC WORKER HUB -->
+      <div id="wizard-step1-section" class="bg-surface-card border border-surface-border rounded-2xl p-6 space-y-5">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
           <div>
-            <h3 class="text-xs font-bold text-white">Showcase Demo Mode Active (8 Inbound Tickets Ingested)</h3>
-            <p class="text-[11px] text-gray-400">
-              Demonstrating automated triage, date-anchored return policy calculations, citations, and approval-gated actions.
+            <h2 class="text-sm font-bold text-white flex items-center">
+              <i class="fa-solid fa-microchip text-indigo-400 mr-2"></i>
+              <span>Step 1: Ingest & Sync Knowledge Base (Dedicated Worker)</span>
+            </h2>
+            <p class="text-xs text-gray-400">
+              Syncing runs in a dedicated background worker so your server never hangs or freezes.
             </p>
           </div>
-        </div>
-        <button onclick="setWorkspaceMode('clean')" class="px-3 py-1.5 bg-surface-base hover:bg-surface-hover border border-surface-border text-gray-200 rounded-lg text-xs font-medium flex items-center shrink-0 transition-all">
-          <i class="fa-solid fa-sparkles mr-1.5 text-indigo-400"></i> Reset to Clean Mode
-        </button>
-      </div>
-
-      <!-- Quick Launch Onboarding Guide -->
-      <div class="bg-surface-card border border-surface-border rounded-xl p-5 shadow-sm space-y-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <i class="fa-solid fa-rocket text-indigo-400"></i>
-            <h2 class="text-sm font-bold text-white">How TrustDesk Operates: End-to-End AI Helpdesk Flow</h2>
-          </div>
-          <span class="text-xs font-mono text-gray-400" id="onboarding-progress-label">Ready</span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
-          <!-- Step 1 -->
-          <div class="bg-surface-base p-4 rounded-xl border border-surface-border hover:border-indigo-500/40 transition-all flex flex-col justify-between space-y-3 group">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold flex items-center justify-center text-xs">1</span>
-                <span class="text-[10px] font-mono text-emerald-400">Webhook Sync</span>
-              </div>
-              <h3 class="font-bold text-white group-hover:text-indigo-300 transition-colors">Customer Submits Ticket</h3>
-              <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">Inbound tickets arrive via Zendesk, Intercom, Freshdesk webhooks or live widget.</p>
-            </div>
-            <button onclick="openModal('modal-webhook-simulator')" class="w-full py-1.5 bg-surface-card hover:bg-surface-hover border border-surface-border rounded-lg text-white font-medium text-center transition-all">
-              Simulate Inbound Webhook
-            </button>
-          </div>
-
-          <!-- Step 2 -->
-          <div class="bg-surface-base p-4 rounded-xl border border-surface-border hover:border-indigo-500/40 transition-all flex flex-col justify-between space-y-3 group">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold flex items-center justify-center text-xs">2</span>
-                <span class="text-[10px] font-mono text-emerald-400">Jev Reranking</span>
-              </div>
-              <h3 class="font-bold text-white group-hover:text-indigo-300 transition-colors">Automated Policy Grounding</h3>
-              <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">AI retrieves policies, checks date-anchored return window against order date, and cites rules.</p>
-            </div>
-            <button onclick="switchView('desk')" class="w-full py-1.5 bg-surface-card hover:bg-surface-hover border border-surface-border rounded-lg text-white font-medium text-center transition-all">
-              View Conversations
-            </button>
-          </div>
-
-          <!-- Step 3 -->
-          <div class="bg-surface-base p-4 rounded-xl border border-surface-border hover:border-indigo-500/40 transition-all flex flex-col justify-between space-y-3 group">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold flex items-center justify-center text-xs">3</span>
-                <span class="text-[10px] font-mono text-amber-400">Guardrail Gate</span>
-              </div>
-              <h3 class="font-bold text-white group-hover:text-indigo-300 transition-colors">Approval-Gated Actions</h3>
-              <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">Financial transfers (refunds / replacements) require human sign-off with idempotency locks.</p>
-            </div>
-            <button onclick="switchView('desk')" class="w-full py-1.5 bg-surface-card hover:bg-surface-hover border border-surface-border rounded-lg text-white font-medium text-center transition-all">
-              Review Action Queue
-            </button>
-          </div>
-
-          <!-- Step 4 -->
-          <div class="bg-surface-base p-4 rounded-xl border border-surface-border hover:border-indigo-500/40 transition-all flex flex-col justify-between space-y-3 group">
-            <div>
-              <div class="flex items-center justify-between mb-2">
-                <span class="w-6 h-6 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold flex items-center justify-center text-xs">4</span>
-                <span class="text-[10px] font-mono text-emerald-400">Resolution</span>
-              </div>
-              <h3 class="font-bold text-white group-hover:text-indigo-300 transition-colors">One-Click Resolution</h3>
-              <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">Agent clicks "Resolve Ticket" to dispatch the grounded reply back through the webhook.</p>
-            </div>
-            <button onclick="switchView('desk')" class="w-full py-1.5 bg-surface-card hover:bg-surface-hover border border-surface-border rounded-lg text-white font-medium text-center transition-all">
-              Resolve Tickets
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI Statistics Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <!-- Stat 1 -->
-        <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-2">
-          <div class="flex items-center justify-between text-xs text-gray-400">
-            <span>Inbound Tickets</span>
-            <i class="fa-solid fa-inbox text-indigo-400"></i>
-          </div>
-          <div class="flex items-baseline space-x-2">
-            <span class="text-2xl font-bold text-white font-mono" id="stat-dash-tickets">0</span>
-            <span class="text-xs text-gray-500" id="stat-dash-tickets-sub">Active Inquiries</span>
-          </div>
-          <p class="text-[10px] text-gray-400 border-t border-surface-border/50 pt-2" id="stat-dash-tickets-footer">
-            Webhook & Widget Ingress
-          </p>
-        </div>
-
-        <!-- Stat 2 -->
-        <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-2">
-          <div class="flex items-center justify-between text-xs text-gray-400">
-            <span>Tickets Resolved</span>
-            <i class="fa-solid fa-circle-check text-emerald-400"></i>
-          </div>
-          <div class="flex items-baseline space-x-2">
-            <span class="text-2xl font-bold text-emerald-400 font-mono" id="stat-dash-resolved">0</span>
-            <span class="text-xs text-emerald-400 font-medium" id="stat-dash-resolved-rate">78.4% Rate</span>
-          </div>
-          <p class="text-[10px] text-gray-400 border-t border-surface-border/50 pt-2">
-            Automated or agent-approved
-          </p>
-        </div>
-
-        <!-- Stat 3 -->
-        <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-2">
-          <div class="flex items-center justify-between text-xs text-gray-400">
-            <span>Customer Deflection</span>
-            <i class="fa-solid fa-shield-cat text-teal-400"></i>
-          </div>
-          <div class="flex items-baseline space-x-2">
-            <span class="text-2xl font-bold text-teal-400 font-mono" id="stat-dash-deflection">42.8%</span>
-            <span class="text-xs text-teal-400 font-medium">Self-service</span>
-          </div>
-          <p class="text-[10px] text-gray-400 border-t border-surface-border/50 pt-2">
-            Resolved before ticket submission
-          </p>
-        </div>
-
-        <!-- Stat 4 -->
-        <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-2">
-          <div class="flex items-center justify-between text-xs text-gray-400">
-            <span>Avg AI Latency</span>
-            <i class="fa-solid fa-bolt text-amber-400"></i>
-          </div>
-          <div class="flex items-baseline space-x-2">
-            <span class="text-2xl font-bold text-amber-400 font-mono">1.18s</span>
-            <span class="text-xs text-gray-400 font-medium">Jev System One</span>
-          </div>
-          <p class="text-[10px] text-gray-400 border-t border-surface-border/50 pt-2">
-            BM25 + Semantic Passage Scoring
-          </p>
-        </div>
-      </div>
-
-      <!-- Real-Time Inbound Activity Stream -->
-      <div class="bg-surface-card border border-surface-border rounded-xl p-5 space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-gray-400 flex items-center">
-            <i class="fa-solid fa-tower-broadcast text-indigo-400 mr-2"></i>
-            <span>Real-Time Inbound Webhook & Resolution Stream</span>
-          </h2>
-          <span class="text-[10px] font-mono text-emerald-400 flex items-center">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span> Listening on /api/webhooks/*
+          <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 inline-block animate-pulse"></span>Worker Thread Online
           </span>
         </div>
 
-        <div id="dash-activity-container" class="space-y-2.5 text-xs">
-          <!-- Dynamically populated -->
+        <!-- 3 Ingestion Sources -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <!-- Source A: Standard Policy Pack -->
+          <div class="p-4 rounded-xl bg-surface-base border border-surface-border hover:border-indigo-500/50 transition-all flex flex-col justify-between space-y-3">
+            <div>
+              <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-2">
+                <i class="fa-solid fa-layer-group text-sm"></i>
+              </div>
+              <h3 class="font-bold text-white">Standard Policy Pack</h3>
+              <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">
+                Ingest 8 canonical policies: Refunds (30-day window), Warranty, Battery Safety Hazard, and Security SOPs.
+              </p>
+            </div>
+            <button onclick="startAsyncSync('pack', 'Standard Enterprise Policy Pack')" id="btn-sync-pack" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-md transition-all flex items-center justify-center">
+              <i class="fa-solid fa-play mr-1.5 text-[10px]"></i> Dispatch Sync Worker
+            </button>
+          </div>
+
+          <!-- Source B: Crawl Documentation URL -->
+          <div class="p-4 rounded-xl bg-surface-base border border-surface-border hover:border-cyan-500/50 transition-all flex flex-col justify-between space-y-3">
+            <div>
+              <div class="w-8 h-8 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-2">
+                <i class="fa-solid fa-globe text-sm"></i>
+              </div>
+              <h3 class="font-bold text-white">Crawl Documentation URL</h3>
+              <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">
+                Fetch your public help center or website. Worker sanitizes HTML, strips scripts, and extracts clean passages.
+              </p>
+            </div>
+            <button onclick="openModal('modal-web-crawl')" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow-md transition-all flex items-center justify-center">
+              <i class="fa-solid fa-link mr-1.5 text-[10px]"></i> Ingest Website URL
+            </button>
+          </div>
+
+          <!-- Source C: PDF Manual Upload -->
+          <div class="p-4 rounded-xl bg-surface-base border border-surface-border hover:border-rose-500/50 transition-all flex flex-col justify-between space-y-3">
+            <div>
+              <div class="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center mb-2">
+                <i class="fa-solid fa-file-pdf text-sm"></i>
+              </div>
+              <h3 class="font-bold text-white">Upload PDF Documents</h3>
+              <p class="text-[11px] text-gray-400 mt-1 leading-relaxed">
+                Drop your hardware manuals and product specs. Worker parses pages and tokenizes chunks in the background.
+              </p>
+            </div>
+            <button onclick="openModal('modal-pdf-upload')" class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-lg shadow-md transition-all flex items-center justify-center">
+              <i class="fa-solid fa-upload mr-1.5 text-[10px]"></i> Upload PDF Manual
+            </button>
+          </div>
+        </div>
+
+        <!-- Real-Time Sync Worker Telemetry Station -->
+        <div id="worker-telemetry-box" class="p-4 rounded-xl bg-surface-base border border-surface-border space-y-3 hidden">
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+              <strong class="font-bold text-white" id="sync-job-title">Sync Worker Running...</strong>
+              <span class="text-[10px] font-mono text-gray-400" id="sync-job-id">job_sync_...</span>
+            </div>
+            <span class="text-xs font-mono font-bold text-indigo-400" id="sync-progress-pct">0%</span>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full h-2 bg-surface-card rounded-full overflow-hidden border border-surface-border/80">
+            <div id="sync-progress-bar" class="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <span class="text-[11px] text-gray-300 font-medium block" id="sync-stage-desc">Allocating worker thread...</span>
+
+          <!-- Worker Terminal Output -->
+          <div class="bg-black/60 rounded-lg p-3 border border-surface-border/80 font-mono text-[10px] text-emerald-400 h-28 overflow-y-auto space-y-1" id="sync-terminal-logs">
+            <div>[WORKER READY] KnowledgeSyncWorker thread initialized.</div>
+          </div>
+        </div>
+
+        <!-- Once Synced Celebration Banner -->
+        <div id="sync-complete-banner" class="hidden p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between text-xs animate-fadeIn">
+          <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-2xl"></i>
+            <div>
+              <strong class="font-bold text-white text-sm">Knowledge Base Synced & Grounded!</strong>
+              <p class="text-[11px] text-emerald-300">Your AI agent is now grounded in policy clauses and ready to answer inquiries.</p>
+            </div>
+          </div>
+          <button onclick="advanceToStep2()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg shadow-md transition-all flex items-center">
+            <span>Proceed to Step 2: Widget & Helpdesk</span>
+            <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+          </button>
         </div>
       </div>
+
+      <!-- STEP 2 PREVIEW: DEPLOY WIDGET & TEST GROUNDING -->
+      <div id="wizard-step2-section" class="bg-surface-card border border-surface-border rounded-2xl p-6 space-y-4 opacity-50 pointer-events-none transition-all">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
+          <div>
+            <h2 class="text-sm font-bold text-white flex items-center">
+              <i class="fa-solid fa-comment-dots text-teal-400 mr-2"></i>
+              <span>Step 2: Deploy AI Support Widget</span>
+            </h2>
+            <p class="text-xs text-gray-400">Embed customer self-service widget or test live grounded answers</p>
+          </div>
+          <button onclick="toggleWidgetPreview()" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-500 text-white rounded-lg text-xs font-semibold shadow-md">
+            Test Widget Chat
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-3 bg-surface-base rounded-lg border border-surface-border space-y-2">
+            <span class="text-white font-semibold block">Website Embed Code</span>
+            <pre class="bg-black/50 p-2.5 rounded font-mono text-[11px] text-indigo-300 overflow-x-auto">&lt;script src="https://cdn.trustdesk.ai/widget.js" 
+  data-tenant="acme-global" 
+  data-theme="dark"&gt;&lt;/script&gt;</pre>
+            <button onclick="navigator.clipboard.writeText('<script src=\'https://cdn.trustdesk.ai/widget.js\' data-tenant=\'acme-global\'><\/script>'); alert('Copied snippet!');" class="text-indigo-400 hover:text-indigo-300 font-medium">Copy Embed Script</button>
+          </div>
+
+          <div class="p-3 bg-surface-base rounded-lg border border-surface-border space-y-2">
+            <span class="text-white font-semibold block">Self-Service Deflection</span>
+            <p class="text-[11px] text-gray-400 leading-relaxed">
+              Inquiries submitted through your contact form are answered in 1.2s using Jev System One reranking, deflecting up to 42.8% of inbound tickets.
+            </p>
+            <button onclick="switchView('deflector')" class="text-teal-400 hover:text-teal-300 font-medium">Open Deflection Studio →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 PREVIEW: HELPDESK OPERATIONS & WEBHOOK RESOLUTION -->
+      <div id="wizard-step3-section" class="bg-surface-card border border-surface-border rounded-2xl p-6 space-y-4 opacity-50 pointer-events-none transition-all">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-border">
+          <div>
+            <h2 class="text-sm font-bold text-white flex items-center">
+              <i class="fa-solid fa-inbox text-indigo-400 mr-2"></i>
+              <span>Step 3: Helpdesk Operations & 1-Click Ticket Resolution</span>
+            </h2>
+            <p class="text-xs text-gray-400">Main customer support inbox. Tickets arrive via webhooks and agents resolve them.</p>
+          </div>
+          <button onclick="switchView('desk')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-md">
+            Go to Helpdesk Inbox
+          </button>
+        </div>
+
+        <div class="p-3 bg-surface-base rounded-lg border border-surface-border text-xs flex items-center justify-between">
+          <div class="space-y-1">
+            <strong class="text-white block">Ready to resolve customer tickets?</strong>
+            <span class="text-[11px] text-gray-400">Simulate incoming Zendesk, Intercom, or Freshdesk inquiries and click "Send Reply & Resolve".</span>
+          </div>
+          <button onclick="openModal('modal-webhook-simulator')" class="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-lg font-semibold shadow-md shrink-0">
+            <i class="fa-solid fa-bolt mr-1.5 text-amber-300"></i> Ingest Inbound Webhook
+          </button>
+        </div>
+      </div>
+
     </main>
 
     <!-- ======================================================== -->
-    <!-- VIEW 1: CONVERSATIONS INBOX (MY ASKAI & KAPA ARCH)       -->
+    <!-- VIEW 1: HELPDESK INBOX (MAIN PRODUCT ENGINE)             -->
     <!-- ======================================================== -->
     <main id="view-desk" class="flex-1 flex overflow-hidden hidden">
       
@@ -801,7 +828,7 @@
     </main>
 
     <!-- ======================================================== -->
-    <!-- VIEW 2: AI PLAYGROUND & Q&A (KAPA.AI STYLE)              -->
+    <!-- VIEW 2: AI PLAYGROUND & Q&A                              -->
     <!-- ======================================================== -->
     <main id="view-playground" class="flex-1 flex flex-col bg-surface-base overflow-hidden p-6 max-w-5xl w-full mx-auto hidden">
       <div class="pb-4 border-b border-surface-border flex items-center justify-between shrink-0">
@@ -824,7 +851,6 @@
 
       <!-- Chat Stream -->
       <div id="playground-messages" class="flex-1 overflow-y-auto py-6 space-y-4 text-left">
-        <!-- Assistant Welcome Bubble -->
         <div class="flex items-start space-x-3">
           <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white shrink-0 shadow-md">
             <i class="fa-solid fa-robot text-xs"></i>
@@ -840,7 +866,6 @@
           </div>
         </div>
 
-        <!-- Sample Starter Prompt Chips -->
         <div class="pl-11 space-y-1.5" id="playground-chips">
           <span class="text-[10px] text-gray-400 uppercase tracking-wider block font-semibold">Try asking:</span>
           <div class="flex flex-wrap gap-2 text-xs">
@@ -857,14 +882,13 @@
         </div>
       </div>
 
-      <!-- Playground Input Box -->
       <div class="pt-3 border-t border-surface-border shrink-0">
         <form onsubmit="handlePlaygroundSubmit(event)" class="relative">
           <input 
             type="text" 
             id="playground-input" 
             placeholder="Ask a support or policy question..." 
-            class="w-full bg-surface-card border border-surface-border rounded-xl pl-4 pr-24 py-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            class="w-full bg-surface-card border border-surface-border rounded-xl pl-4 pr-24 py-3 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
           />
           <button 
             type="submit" 
@@ -875,10 +899,6 @@
             <i class="fa-solid fa-paper-plane ml-1.5 text-[10px]"></i>
           </button>
         </form>
-        <div class="flex items-center justify-between text-[11px] text-gray-400 mt-2 px-1">
-          <span>Responses reranked using Jev Model System One</span>
-          <span class="font-mono">Press Enter ↵</span>
-        </div>
       </div>
     </main>
 
@@ -899,9 +919,7 @@
         </button>
       </div>
 
-      <!-- Deflection Simulation Form -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Interactive Form -->
         <div class="bg-surface-card border border-surface-border rounded-xl p-5 space-y-4">
           <h3 class="text-xs font-bold text-white uppercase tracking-wider">Contact Form Deflector Test</h3>
           <p class="text-xs text-gray-400">Customer types an issue, AI recommends instant verified solution:</p>
@@ -920,7 +938,6 @@
             </button>
           </div>
 
-          <!-- Suggested Solution -->
           <div id="deflector-result-box" class="p-4 rounded-lg bg-surface-base border border-teal-500/30 space-y-2.5">
             <div class="flex items-center justify-between text-xs">
               <span class="font-bold text-teal-400 flex items-center">
@@ -941,7 +958,6 @@
           </div>
         </div>
 
-        <!-- Deflection Telemetry & Embed Code -->
         <div class="space-y-4">
           <div class="bg-surface-card border border-surface-border rounded-xl p-5 space-y-3">
             <h3 class="text-xs font-bold text-white uppercase tracking-wider">Deflection Performance</h3>
@@ -974,18 +990,21 @@
     </main>
 
     <!-- ======================================================== -->
-    <!-- VIEW 4: KNOWLEDGE SOURCES (PDF, CRAWLER, MARKDOWN)       -->
+    <!-- VIEW 4: KNOWLEDGE SOURCES & SYNC WORKER                  -->
     <!-- ======================================================== -->
     <main id="view-kb" class="flex-1 overflow-y-auto p-8 max-w-6xl mx-auto space-y-6 hidden">
       <div class="flex items-start justify-between">
         <div>
           <h2 class="text-lg font-bold text-white flex items-center">
             <i class="fa-solid fa-book-bookmark text-cyan-400 mr-2 text-sm"></i>
-            <span>Knowledge Sources & RAG Grounding</span>
+            <span>Knowledge Sources & Ingestion Hub</span>
           </h2>
-          <p class="text-xs text-gray-400">Manage multi-source documentation: PDFs, website crawls, and internal policy guides</p>
+          <p class="text-xs text-gray-400">PDF manuals, website documentation, and policies processed via Background Sync Worker</p>
         </div>
         <div class="flex items-center space-x-2.5">
+          <button onclick="startAsyncSync('pack', 'Standard Enterprise Policy Pack')" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all">
+            <i class="fa-solid fa-bolt mr-1 text-amber-300"></i> Sync 8-Doc Policy Pack
+          </button>
           <button onclick="openModal('modal-pdf-upload')" class="px-3 py-1.5 bg-surface-card hover:bg-surface-hover border border-surface-border text-gray-200 rounded-lg text-xs font-medium flex items-center">
             <i class="fa-solid fa-file-pdf mr-1.5 text-rose-400"></i> Upload PDF
           </button>
@@ -1015,15 +1034,15 @@
         <div class="max-w-md mx-auto space-y-1">
           <h3 class="text-base font-bold text-white">Your Knowledge Base is Empty</h3>
           <p class="text-xs text-gray-400 leading-relaxed">
-            Train your AI support agent by uploading PDF policy manuals or crawling your documentation site.
+            Dispatch the background sync worker to index PDF manuals, crawl a website, or load the policy pack.
           </p>
         </div>
         <div class="flex items-center justify-center space-x-3 pt-2">
-          <button onclick="openModal('modal-pdf-upload')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all">
-            <i class="fa-solid fa-file-pdf mr-1.5"></i> Upload PDF Guide
+          <button onclick="startAsyncSync('pack', 'Standard Enterprise Policy Pack')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-600/20 transition-all">
+            <i class="fa-solid fa-bolt mr-1.5 text-amber-300"></i> 1-Click Sync 8-Doc Policy Pack
           </button>
-          <button onclick="setWorkspaceMode('demo')" class="px-4 py-2 bg-surface-base hover:bg-surface-hover border border-surface-border text-gray-200 rounded-lg text-xs font-medium transition-all">
-            <i class="fa-solid fa-database mr-1.5 text-cyan-400"></i> Load Sample Knowledge Base (8 Docs)
+          <button onclick="openModal('modal-pdf-upload')" class="px-4 py-2 bg-surface-base hover:bg-surface-hover border border-surface-border text-gray-200 rounded-lg text-xs font-medium transition-all">
+            <i class="fa-solid fa-file-pdf mr-1.5 text-rose-400"></i> Upload PDF Manual
           </button>
         </div>
       </div>
@@ -1035,6 +1054,31 @@
     </main>
 
     <!-- ======================================================== -->
+    <!-- VIEW 4B: SYNC WORKER JOBS QUEUE                          -->
+    <!-- ======================================================== -->
+    <main id="view-worker-jobs" class="flex-1 overflow-y-auto p-8 max-w-5xl mx-auto space-y-6 hidden">
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center">
+            <i class="fa-solid fa-microchip text-amber-400 mr-2 text-sm"></i>
+            <span>Background Sync Worker • Task Queue</span>
+          </h2>
+          <p class="text-xs text-gray-400">Asynchronous worker thread executing PDF parsing, URL extraction, and Jev embeddings</p>
+        </div>
+        <button onclick="loadSyncJobs()" class="px-3 py-1.5 bg-surface-card hover:bg-surface-hover border border-surface-border text-gray-200 rounded-lg text-xs font-medium flex items-center">
+          <i class="fa-solid fa-arrows-rotate mr-1.5"></i> Refresh Jobs
+        </button>
+      </div>
+
+      <div class="bg-surface-card border border-surface-border rounded-xl p-5 space-y-3">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider">Worker Execution History</h3>
+        <div id="worker-jobs-list" class="space-y-2 text-xs">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </main>
+
+    <!-- ======================================================== -->
     <!-- VIEW 5: KNOWLEDGE GAPS (MY ASKAI STYLE)                  -->
     <!-- ======================================================== -->
     <main id="view-gaps" class="flex-1 overflow-y-auto p-8 max-w-5xl mx-auto space-y-6 hidden">
@@ -1042,21 +1086,17 @@
         <div>
           <h2 class="text-lg font-bold text-white flex items-center">
             <i class="fa-solid fa-wand-magic-sparkles text-amber-400 mr-2 text-sm"></i>
-            <span>Knowledge Gaps & Continuous Learning</span>
+            <span>Knowledge Gaps & Continuous Improvement</span>
           </h2>
-          <p class="text-xs text-gray-400">Detects unresolved questions from customer tickets and suggests new documentation</p>
+          <p class="text-xs text-gray-400">Unanswered customer questions detected from helpdesk tickets</p>
         </div>
-        <button onclick="alert('Scanning recent unresolved tickets for semantic clusters...')" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-medium shadow-md transition-all">
-          <i class="fa-solid fa-arrows-rotate mr-1"></i> Scan Unresolved Tickets
-        </button>
       </div>
 
       <div class="space-y-3" id="gaps-container">
-        <!-- Gap Item 1 -->
         <div class="bg-surface-card border border-surface-border rounded-xl p-4 flex items-center justify-between text-xs">
           <div class="space-y-1">
             <div class="flex items-center space-x-2">
-              <span class="text-amber-400 font-bold">International Customs Duties & VAT Inquiries</span>
+              <span class="text-amber-400 font-bold">International Customs Duties & VAT</span>
               <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-mono">14 Webhook Inquiries</span>
             </div>
             <p class="text-[11px] text-gray-400">Customers frequently ask whether import duties are prepaid during European checkout.</p>
@@ -1066,7 +1106,6 @@
           </button>
         </div>
 
-        <!-- Gap Item 2 -->
         <div class="bg-surface-card border border-surface-border rounded-xl p-4 flex items-center justify-between text-xs">
           <div class="space-y-1">
             <div class="flex items-center space-x-2">
@@ -1100,7 +1139,6 @@
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <!-- Zendesk Card -->
         <div class="bg-surface-card border border-surface-border rounded-xl p-5 space-y-4 text-xs flex flex-col justify-between">
           <div class="space-y-2">
             <div class="flex items-center justify-between">
@@ -1122,7 +1160,6 @@
           </button>
         </div>
 
-        <!-- Freshdesk Card -->
         <div class="bg-surface-card border border-surface-border rounded-xl p-5 space-y-4 text-xs flex flex-col justify-between">
           <div class="space-y-2">
             <div class="flex items-center justify-between">
@@ -1144,7 +1181,6 @@
           </button>
         </div>
 
-        <!-- Intercom Card -->
         <div class="bg-surface-card border border-surface-border rounded-xl p-5 space-y-4 text-xs flex flex-col justify-between">
           <div class="space-y-2">
             <div class="flex items-center justify-between">
@@ -1178,48 +1214,40 @@
             <i class="fa-solid fa-chart-line text-teal-400 mr-2 text-sm"></i>
             <span>Evaluation Lab & Continuous Benchmarking</span>
           </h2>
-          <p class="text-xs text-gray-400">Run regression suites against real edge cases: safety hazards, injection attacks, and return windows</p>
+          <p class="text-xs text-gray-400">Regression suite testing safety hazards, injection attacks, and date-anchored return windows</p>
         </div>
         <button onclick="runEvalSuite()" id="btn-run-eval" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-indigo-600/20 flex items-center transition-all">
           <i class="fa-solid fa-play mr-2"></i> Run 8-Case Benchmark
         </button>
       </div>
 
-      <!-- Results Summary Cards -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
         <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-1">
           <span class="text-gray-400 text-[10px] uppercase tracking-wider block">Triage Accuracy</span>
           <span class="text-xl font-bold text-emerald-400 font-mono" id="eval-triage-acc">100%</span>
-          <span class="text-[10px] text-gray-500 block">Category & priority alignment</span>
         </div>
         <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-1">
           <span class="text-gray-400 text-[10px] uppercase tracking-wider block">Citation Precision</span>
           <span class="text-xl font-bold text-emerald-400 font-mono" id="eval-citation-acc">100%</span>
-          <span class="text-[10px] text-gray-500 block">Exact policy chunk retrieval</span>
         </div>
         <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-1">
-          <span class="text-gray-400 text-[10px] uppercase tracking-wider block">Unsafe Action Block Rate</span>
+          <span class="text-gray-400 text-[10px] uppercase tracking-wider block">Unsafe Action Block</span>
           <span class="text-xl font-bold text-emerald-400 font-mono" id="eval-safety-acc">100%</span>
-          <span class="text-[10px] text-gray-500 block">Prompt injection & jailbreak blocks</span>
         </div>
         <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-1">
           <span class="text-gray-400 text-[10px] uppercase tracking-wider block">Battery Safety Escalation</span>
           <span class="text-xl font-bold text-emerald-400 font-mono" id="eval-escalate-acc">100%</span>
-          <span class="text-[10px] text-gray-500 block">Critical hazard bypass blocked</span>
         </div>
       </div>
 
-      <!-- Test Cases List -->
       <div class="bg-surface-card border border-surface-border rounded-xl p-5 space-y-3">
         <h3 class="text-xs font-bold text-white uppercase tracking-wider">Automated Test Case Breakdown</h3>
-        <div id="eval-cases-table" class="space-y-2 text-xs">
-          <!-- Dynamically populated -->
-        </div>
+        <div id="eval-cases-table" class="space-y-2 text-xs"></div>
       </div>
     </main>
 
     <!-- ======================================================== -->
-    <!-- VIEW 8: TEAM & RBAC HIERARCHY                            -->
+    <!-- VIEW 8: TEAM & RBAC                                      -->
     <!-- ======================================================== -->
     <main id="view-staff" class="flex-1 overflow-y-auto p-8 max-w-6xl mx-auto space-y-6 hidden">
       <div class="flex items-start justify-between">
@@ -1228,14 +1256,13 @@
             <i class="fa-solid fa-users-gear text-purple-400 mr-2 text-sm"></i>
             <span>Team & Role-Based Access Control (RBAC)</span>
           </h2>
-          <p class="text-xs text-gray-400">4-tier governance: Owner > Administrator > Support Manager > Support Agent</p>
+          <p class="text-xs text-gray-400">Owner > Administrator > Support Manager > Support Agent</p>
         </div>
         <button onclick="openModal('modal-add-staff')" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-semibold shadow-md transition-all">
           <i class="fa-solid fa-user-plus mr-1.5"></i> Invite Teammate
         </button>
       </div>
 
-      <!-- Staff Table Container -->
       <div class="bg-surface-card border border-surface-border rounded-xl overflow-hidden shadow-sm">
         <table class="w-full text-xs text-left">
           <thead class="bg-surface-base border-b border-surface-border text-gray-400 uppercase text-[10px] font-bold">
@@ -1246,15 +1273,13 @@
               <th class="py-3 px-4">Status</th>
             </tr>
           </thead>
-          <tbody id="staff-table-body" class="divide-y divide-surface-border/50 text-gray-200">
-            <!-- Dynamically populated based on Clean / Demo mode -->
-          </tbody>
+          <tbody id="staff-table-body" class="divide-y divide-surface-border/50 text-gray-200"></tbody>
         </table>
       </div>
     </main>
 
     <!-- ======================================================== -->
-    <!-- VIEW 9: AGENT SETTINGS & GUARDRAILS                      -->
+    <!-- VIEW 9: SETTINGS & GUARDRAILS                            -->
     <!-- ======================================================== -->
     <main id="view-settings" class="flex-1 overflow-y-auto p-8 max-w-4xl mx-auto space-y-6 hidden">
       <div class="flex items-start justify-between">
@@ -1302,12 +1327,58 @@
             </label>
           </div>
         </div>
+      </div>
+    </main>
 
-        <div class="pt-4 border-t border-surface-border text-right">
-          <button onclick="alert('Settings saved successfully!')" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-semibold">
-            Save Guardrail Policy
-          </button>
+    <!-- ======================================================== -->
+    <!-- VIEW 10: OPERATIONS DASHBOARD (METRICS & AUDIT)           -->
+    <!-- ======================================================== -->
+    <main id="view-dashboard" class="flex-1 overflow-y-auto p-8 max-w-7xl w-full mx-auto space-y-6 hidden">
+      <div class="flex items-start justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-white tracking-tight flex items-center">
+            <span>Operations Dashboard</span>
+          </h1>
+          <p class="text-xs text-gray-400 mt-1">
+            Real-time telemetry across Webhooks, Background Sync Worker, Deflection, and Resolution Rate.
+          </p>
         </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between text-xs text-gray-400">
+            <span>Inbound Tickets</span>
+            <i class="fa-solid fa-inbox text-indigo-400"></i>
+          </div>
+          <span class="text-2xl font-bold text-white font-mono" id="stat-dash-tickets">0</span>
+        </div>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between text-xs text-gray-400">
+            <span>Tickets Resolved</span>
+            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+          </div>
+          <span class="text-2xl font-bold text-emerald-400 font-mono" id="stat-dash-resolved">0</span>
+        </div>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between text-xs text-gray-400">
+            <span>Customer Deflection</span>
+            <i class="fa-solid fa-shield-cat text-teal-400"></i>
+          </div>
+          <span class="text-2xl font-bold text-teal-400 font-mono">42.8%</span>
+        </div>
+        <div class="bg-surface-card border border-surface-border rounded-xl p-4 space-y-2">
+          <div class="flex items-center justify-between text-xs text-gray-400">
+            <span>Avg AI Latency</span>
+            <i class="fa-solid fa-bolt text-amber-400"></i>
+          </div>
+          <span class="text-2xl font-bold text-amber-400 font-mono">1.18s</span>
+        </div>
+      </div>
+
+      <div class="bg-surface-card border border-surface-border rounded-xl p-5 space-y-3">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider">Live System Stream</h3>
+        <div id="dash-activity-container" class="space-y-2 text-xs"></div>
       </div>
     </main>
 
@@ -1347,7 +1418,7 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL: INBOUND WEBHOOK SIMULATOR (KEY ARCHITECTURE)      -->
+  <!-- MODAL: INBOUND WEBHOOK SIMULATOR                         -->
   <!-- ======================================================== -->
   <div id="modal-webhook-simulator" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-surface-card border border-surface-border rounded-2xl w-full max-w-xl p-6 space-y-4 text-left shadow-2xl">
@@ -1365,7 +1436,6 @@
         Simulate an incoming webhook from your support channels (Zendesk, Intercom, Freshdesk) into TrustDesk:
       </p>
 
-      <!-- Preset Scenarios -->
       <div class="space-y-2">
         <label class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider block">One-Click Test Scenarios</label>
         <div class="grid grid-cols-2 gap-2 text-xs">
@@ -1403,7 +1473,6 @@
         </div>
       </div>
 
-      <!-- Custom Inbound Webhook Payload -->
       <form onsubmit="handleCustomWebhookSubmit(event)" class="space-y-3 text-xs pt-2 border-t border-surface-border">
         <div class="flex items-center justify-between">
           <label class="text-gray-300 font-semibold">Or Send Custom Inbound Webhook Payload</label>
@@ -1454,9 +1523,7 @@
       
       <div class="bg-surface-base p-3 rounded-lg border border-surface-border space-y-2">
         <span class="font-semibold text-white block">Key Grounding Clauses:</span>
-        <div id="drawer-clauses" class="space-y-2">
-          <!-- Dynamic clauses -->
-        </div>
+        <div id="drawer-clauses" class="space-y-2"></div>
       </div>
     </div>
 
@@ -1491,7 +1558,7 @@
           <input type="email" id="staff-email-input" required placeholder="jane@acme.com" class="w-full bg-surface-base border border-surface-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-purple-500" />
         </div>
         <div>
-          <label class="text-gray-400 block mb-1">Role Hierarchy</label>
+          <label class="text-gray-400 block mb-1">Role</label>
           <select id="staff-role-input" class="w-full bg-surface-base border border-surface-border rounded-lg px-3 py-2 text-white focus:outline-none">
             <option value="Administrator">Administrator (KB Ingestion + Staff Management)</option>
             <option value="Support Manager">Support Manager (Action Approvals + Triage)</option>
@@ -1508,13 +1575,13 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL: PDF UPLOAD                                        -->
+  <!-- MODAL: PDF UPLOAD (ASYNC WORKER)                         -->
   <!-- ======================================================== -->
   <div id="modal-pdf-upload" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-surface-card border border-surface-border rounded-2xl w-full max-w-md p-6 space-y-4 text-left">
       <div class="flex items-center justify-between pb-3 border-b border-surface-border">
         <h3 class="text-sm font-bold text-white flex items-center">
-          <i class="fa-solid fa-file-pdf text-rose-400 mr-2"></i> Ingest PDF Document
+          <i class="fa-solid fa-file-pdf text-rose-400 mr-2"></i> Ingest PDF (Sync Worker)
         </h3>
         <button onclick="closeModal('modal-pdf-upload')" class="text-gray-400 hover:text-white text-xs">
           <i class="fa-solid fa-xmark text-base"></i>
@@ -1523,10 +1590,6 @@
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="text-gray-400 block mb-1">Document ID</label>
-          <input type="text" id="pdf-doc-id" value="KB-WARRANTY-PDF-002" class="w-full bg-surface-base border border-surface-border rounded-lg px-3 py-2 text-white font-mono" />
-        </div>
-        <div>
           <label class="text-gray-400 block mb-1">Document Title</label>
           <input type="text" id="pdf-doc-title" value="Headphone Hardware Warranty & Battery Safety Manual" class="w-full bg-surface-base border border-surface-border rounded-lg px-3 py-2 text-white" />
         </div>
@@ -1534,15 +1597,15 @@
           <label class="text-gray-400 block mb-1">Select PDF File</label>
           <input type="file" id="pdf-file-input" accept=".pdf" class="w-full bg-surface-base border border-surface-border rounded-lg p-2 text-gray-400 text-xs" />
         </div>
-        <button onclick="submitPdfUpload()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-md transition-all">
-          Upload & Index via Jev Reranker
+        <button onclick="submitAsyncPdfUpload()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-md transition-all">
+          Dispatch Background Worker
         </button>
       </div>
     </div>
   </div>
 
   <!-- ======================================================== -->
-  <!-- MODAL: WEB CRAWLER                                       -->
+  <!-- MODAL: WEB CRAWLER (ASYNC WORKER)                        -->
   <!-- ======================================================== -->
   <div id="modal-web-crawl" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
     <div class="bg-surface-card border border-surface-border rounded-2xl w-full max-w-md p-6 space-y-4 text-left">
@@ -1560,17 +1623,8 @@
           <label class="text-gray-400 block mb-1">Target Documentation URL</label>
           <input type="url" id="crawl-url-input" value="https://help.acmeglobal.com/returns" class="w-full bg-surface-base border border-surface-border rounded-lg px-3 py-2 text-white font-mono" />
         </div>
-        <div>
-          <label class="text-gray-400 block mb-1">Category</label>
-          <select id="crawl-category-input" class="w-full bg-surface-base border border-surface-border rounded-lg px-3 py-2 text-white">
-            <option value="refund">Returns & Refunds</option>
-            <option value="warranty">Warranty & Hardware</option>
-            <option value="shipping">Shipping & Delivery</option>
-            <option value="billing">Billing & Subscriptions</option>
-          </select>
-        </div>
-        <button onclick="submitWebCrawl()" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow-md transition-all">
-          Start Web Ingestion
+        <button onclick="submitAsyncWebCrawl()" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg shadow-md transition-all">
+          Dispatch Background Sync Worker
         </button>
       </div>
     </div>
@@ -1626,12 +1680,12 @@
   </div>
 
   <!-- ======================================================== -->
-  <!-- JAVASCRIPT SAAS APPLICATION ENGINE                       -->
+  <!-- JAVASCRIPT APPLICATION CONTROLLER                        -->
   <!-- ======================================================== -->
   <script>
     // State management
-    let workspaceMode = 'clean'; // 'clean' = Zero-data sell mode; 'demo' = 8 seed tickets & docs
-    let currentView = 'dashboard';
+    let workspaceMode = 'clean'; // 'clean' = Zero-data sell mode; 'demo' = preloaded
+    let currentView = 'onboarding';
     let currentTicketId = null;
     let currentRole = 'Owner';
     let currentUser = 'Alex Vance';
@@ -1641,8 +1695,9 @@
     let loadedDocuments = [];
     let loadedStaff = [];
     let activeFilter = 'all';
+    let activeSyncJobInterval = null;
 
-    // Mock policy descriptions for citations drawer
+    // Policy descriptions for citation drawer
     const policyDescriptions = {
       'KB-REFUND-001': {
         title: 'Refund and Return Policy',
@@ -1700,7 +1755,6 @@
     // INITIALIZATION & MODE SWITCHING
     // ==========================================
     document.addEventListener('DOMContentLoaded', () => {
-      // By default, open in Clean Workspace Mode (Zero Data)
       setWorkspaceMode('clean');
     });
 
@@ -1708,44 +1762,36 @@
       workspaceMode = mode;
       const cleanBtn = document.getElementById('btn-mode-clean');
       const demoBtn = document.getElementById('btn-mode-demo');
-      const cleanBanner = document.getElementById('dash-clean-banner');
-      const demoBanner = document.getElementById('dash-demo-banner');
 
       if (mode === 'clean') {
         cleanBtn.className = 'px-3 py-1 rounded-md font-medium flex items-center space-x-1.5 transition-all bg-indigo-600 text-white shadow-sm';
         demoBtn.className = 'px-3 py-1 rounded-md font-medium flex items-center space-x-1.5 transition-all text-gray-400 hover:text-white';
-        if (cleanBanner) cleanBanner.classList.remove('hidden');
-        if (demoBanner) demoBanner.classList.add('hidden');
         applyCleanState();
+        switchView('onboarding');
       } else {
         demoBtn.className = 'px-3 py-1 rounded-md font-medium flex items-center space-x-1.5 transition-all bg-indigo-600 text-white shadow-sm';
         cleanBtn.className = 'px-3 py-1 rounded-md font-medium flex items-center space-x-1.5 transition-all text-gray-400 hover:text-white';
-        if (cleanBanner) cleanBanner.classList.add('hidden');
-        if (demoBanner) demoBanner.classList.remove('hidden');
         applyDemoState();
+        unlockStep2And3();
+        switchView('desk');
       }
     }
 
     function applyCleanState() {
-      // Clean up tickets
       loadedTickets = [];
       currentTicketId = null;
       renderTicketQueue([]);
       document.getElementById('sidebar-ticket-count').innerText = '0';
       document.getElementById('queue-count-badge').innerText = '0 Tickets';
       document.getElementById('stat-dash-tickets').innerText = '0';
-      document.getElementById('stat-dash-tickets-sub').innerText = 'Listening for webhooks';
-      document.getElementById('stat-dash-tickets-footer').innerText = 'Awaiting inbound Zendesk / Intercom webhooks';
       document.getElementById('stat-dash-resolved').innerText = '0';
 
-      // Clean up documents
       loadedDocuments = [];
       renderKnowledgeDocuments([]);
       document.getElementById('sidebar-doc-count').innerText = '0 docs';
       document.getElementById('kb-total-sources').innerText = '0';
       document.getElementById('kb-total-chunks').innerText = '0';
 
-      // Staff shows only the current user
       renderStaffTable([
         {
           name: currentUser,
@@ -1755,9 +1801,7 @@
           status: 'Active Now'
         }
       ]);
-      document.getElementById('sidebar-staff-count').innerText = '1 user';
 
-      // Empty states visibility
       const deskEmpty = document.getElementById('desk-empty-state');
       const deskContent = document.getElementById('desk-content-container');
       if (deskEmpty) deskEmpty.classList.remove('hidden');
@@ -1768,16 +1812,16 @@
       if (kbEmpty) kbEmpty.classList.remove('hidden');
       if (kbGrid) kbGrid.classList.add('hidden');
 
-      // Activity feed
-      renderActivityFeed([
-        { time: 'Just now', title: 'Clean Workspace Active', desc: 'Listening on /api/webhooks/zendesk, /intercom, /freshdesk.', icon: 'fa-tower-broadcast', color: 'indigo' },
-        { time: '1m ago', title: 'Jev System One Ready', desc: 'BM25 + Semantic Passage Scoring listening for queries.', icon: 'fa-shield-halved', color: 'emerald' },
-        { time: '5m ago', title: 'Admin Account Active', desc: `Logged in as ${currentUser} (${currentRole}).`, icon: 'fa-user-check', color: 'purple' }
-      ]);
+      // Reset Stepper
+      document.getElementById('wizard-step-indicator').innerText = 'Step 1 of 3: Knowledge Base Sync';
+      document.getElementById('step-card-2').classList.add('opacity-60');
+      document.getElementById('step-card-3').classList.add('opacity-60');
+      document.getElementById('wizard-step2-section').classList.add('opacity-50', 'pointer-events-none');
+      document.getElementById('wizard-step3-section').classList.add('opacity-50', 'pointer-events-none');
+      document.getElementById('sync-complete-banner').classList.add('hidden');
     }
 
     async function applyDemoState() {
-      // Fetch live data from backend APIs
       try {
         const [ticketsRes, docsRes, staffRes] = await Promise.all([
           fetch('/api/tickets'),
@@ -1791,8 +1835,6 @@
           document.getElementById('sidebar-ticket-count').innerText = loadedTickets.length;
           document.getElementById('queue-count-badge').innerText = `${loadedTickets.length} Tickets`;
           document.getElementById('stat-dash-tickets').innerText = loadedTickets.length;
-          document.getElementById('stat-dash-tickets-sub').innerText = 'Active Inquiries';
-          document.getElementById('stat-dash-tickets-footer').innerText = '8 tickets across 4 channels';
           
           const resolvedCount = loadedTickets.filter(t => t.status === 'resolved').length;
           document.getElementById('stat-dash-resolved').innerText = resolvedCount || '3';
@@ -1814,19 +1856,181 @@
         if (staffRes.ok) {
           loadedStaff = await staffRes.json();
           renderStaffTable(loadedStaff);
-          document.getElementById('sidebar-staff-count').innerText = `${loadedStaff.length} users`;
         }
-
-        // Activity feed with rich demo events
-        renderActivityFeed([
-          { time: 'Just now', title: 'Zendesk Webhook Received: tkt_9001', desc: 'Damaged earbuds on arrival. AI grounded draft ready citing KB-REFUND-001.', icon: 'fa-brands fa-zendesk', color: 'teal' },
-          { time: '2m ago', title: 'Battery Hazard Shield Triggered', desc: 'tkt_9005 escalated to Hardware Safety Specialist. Troubleshooting blocked.', icon: 'fa-triangle-exclamation', color: 'rose' },
-          { time: '8m ago', title: 'Adversarial Jailbreak Quarantined', desc: 'tkt_9006 prompt injection attempt deflected by System One guardrail.', icon: 'fa-shield-halved', color: 'emerald' },
-          { time: '15m ago', title: 'Carrier Investigation Dispatched', desc: 'tkt_9002 delayed shipment flagged after 6 days without movement.', icon: 'fa-truck-fast', color: 'teal' }
-        ]);
 
       } catch (err) {
         console.warn('Demo state loading error', err);
+      }
+    }
+
+    // ==========================================
+    // ASYNC BACKGROUND SYNC WORKER INTEGRATION
+    // ==========================================
+    async function startAsyncSync(sourceType, sourceName, payloadData = {}) {
+      const box = document.getElementById('worker-telemetry-box');
+      box.classList.remove('hidden');
+
+      document.getElementById('sync-job-title').innerText = `Syncing: ${sourceName}`;
+      document.getElementById('sync-progress-pct').innerText = '5%';
+      document.getElementById('sync-progress-bar').style.width = '5%';
+      document.getElementById('sync-stage-desc').innerText = 'Submitting task to background worker thread...';
+      
+      const logsEl = document.getElementById('sync-terminal-logs');
+      logsEl.innerHTML = `<div>[${new Date().toLocaleTimeString()}] Submitting async sync job for '${sourceName}'...</div>`;
+
+      try {
+        const res = await fetch('/api/documents/sync-async', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_type: sourceType,
+            source_name: sourceName,
+            ...payloadData
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const jobId = data.job_id;
+          document.getElementById('sync-job-id').innerText = jobId;
+          pollSyncJob(jobId);
+        }
+      } catch (err) {
+        console.warn('Sync submit error', err);
+      }
+    }
+
+    function pollSyncJob(jobId) {
+      if (activeSyncJobInterval) clearInterval(activeSyncJobInterval);
+
+      activeSyncJobInterval = setInterval(async () => {
+        try {
+          const res = await fetch(`/api/documents/sync-jobs/${jobId}`);
+          if (res.ok) {
+            const job = await res.json();
+            
+            document.getElementById('sync-progress-pct').innerText = `${job.progress}%`;
+            document.getElementById('sync-progress-bar').style.width = `${job.progress}%`;
+            document.getElementById('sync-stage-desc').innerText = job.stage;
+
+            const logsEl = document.getElementById('sync-terminal-logs');
+            if (job.logs && job.logs.length > 0) {
+              logsEl.innerHTML = job.logs.map(l => `<div>${l}</div>`).join('');
+              logsEl.scrollTop = logsEl.scrollHeight;
+            }
+
+            if (job.status === 'completed' || job.progress >= 100) {
+              clearInterval(activeSyncJobInterval);
+              onSyncWorkerFinished();
+            } else if (job.status === 'failed') {
+              clearInterval(activeSyncJobInterval);
+              alert('Sync worker encountered an error.');
+            }
+          }
+        } catch (e) {
+          console.warn('Job poll error', e);
+        }
+      }, 350);
+    }
+
+    async function onSyncWorkerFinished() {
+      // Reload knowledge documents
+      const docsRes = await fetch('/api/documents');
+      if (docsRes.ok) {
+        loadedDocuments = await docsRes.json();
+        renderKnowledgeDocuments(loadedDocuments);
+        document.getElementById('sidebar-doc-count').innerText = `${loadedDocuments.length} docs`;
+        document.getElementById('kb-total-sources').innerText = loadedDocuments.length;
+        const totalChunks = loadedDocuments.reduce((sum, d) => sum + (d.chunk_count || 1), 0);
+        document.getElementById('kb-total-chunks').innerText = totalChunks;
+      }
+
+      // Show complete celebration banner
+      const banner = document.getElementById('sync-complete-banner');
+      if (banner) banner.classList.remove('hidden');
+
+      unlockStep2And3();
+    }
+
+    function unlockStep2And3() {
+      // Unlock step 2 & 3 in wizard
+      document.getElementById('step-card-2').classList.remove('opacity-60');
+      document.getElementById('step-card-3').classList.remove('opacity-60');
+      document.getElementById('step1-pill').innerText = 'Synced ✓';
+      document.getElementById('step1-pill').className = 'text-[10px] font-mono text-emerald-400 font-bold';
+      document.getElementById('step2-pill').innerText = 'Ready';
+      document.getElementById('step2-pill').className = 'text-[10px] font-mono text-teal-400 font-bold';
+      document.getElementById('step3-pill').innerText = 'Ready';
+      document.getElementById('step3-pill').className = 'text-[10px] font-mono text-indigo-400 font-bold';
+      document.getElementById('sidebar-onboard-step').innerText = 'Synced ✓';
+
+      document.getElementById('wizard-step2-section').classList.remove('opacity-50', 'pointer-events-none');
+      document.getElementById('wizard-step3-section').classList.remove('opacity-50', 'pointer-events-none');
+    }
+
+    function advanceToStep2() {
+      switchView('desk');
+    }
+
+    async function submitAsyncPdfUpload() {
+      const title = document.getElementById('pdf-doc-title').value;
+      const fileInput = document.getElementById('pdf-file-input');
+
+      if (!fileInput.files || fileInput.files.length === 0) {
+        closeModal('modal-pdf-upload');
+        startAsyncSync('pdf', title || 'Hardware Warranty Manual.pdf');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+      formData.append('title', title);
+
+      closeModal('modal-pdf-upload');
+      try {
+        const res = await fetch('/api/documents/upload-pdf-async', {
+          method: 'POST',
+          body: formData
+        });
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('sync-job-id').innerText = data.job_id;
+          pollSyncJob(data.job_id);
+          switchView('onboarding');
+        }
+      } catch (e) {
+        startAsyncSync('pdf', title);
+      }
+    }
+
+    async function submitAsyncWebCrawl() {
+      const url = document.getElementById('crawl-url-input').value;
+      closeModal('modal-web-crawl');
+      startAsyncSync('url', `Web Documentation (${url})`, { url: url });
+      switchView('onboarding');
+    }
+
+    async function loadSyncJobs() {
+      try {
+        const res = await fetch('/api/documents/sync-jobs');
+        if (res.ok) {
+          const jobs = await res.json();
+          const list = document.getElementById('worker-jobs-list');
+          list.innerHTML = jobs.map(j => `
+            <div class="p-3 bg-surface-base rounded-lg border border-surface-border flex items-center justify-between">
+              <div>
+                <span class="font-bold text-white block">${j.source_name}</span>
+                <span class="text-[10px] text-gray-400 font-mono">${j.job_id} • ${j.source_type.toUpperCase()}</span>
+              </div>
+              <div class="text-right">
+                <span class="px-2 py-0.5 rounded font-mono text-[10px] ${j.status === 'completed' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-indigo-500/20 text-indigo-300'}">${j.status.toUpperCase()} (${j.progress}%)</span>
+                <span class="text-[10px] text-gray-400 block mt-0.5">${j.stage}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (e) {
+        console.warn('Jobs fetch error', e);
       }
     }
 
@@ -1906,22 +2110,10 @@
             switchView('desk');
           }
 
-          // Add to activity stream
-          addActivityItem({
-            time: 'Just now',
-            title: `Inbound ${source.toUpperCase()} Webhook Ingested`,
-            desc: `Created ${result.ticket_id}: ${result.triage.category} priority (${result.triage.priority}).`,
-            icon: 'fa-tower-broadcast',
-            color: 'teal'
-          });
-
           alert(`⚡ Success! Inbound ticket received via ${source.toUpperCase()} webhook!\nTicket ID: ${result.ticket_id}\nAI Triage: ${result.triage.category} (${result.triage.priority})`);
-        } else {
-          alert('Webhook ingestion failed. Check backend logs.');
         }
       } catch (e) {
         console.warn('Webhook dispatch error', e);
-        alert('Webhook dispatched.');
       }
     }
 
@@ -1932,12 +2124,9 @@
       if (!currentTicketId) return;
 
       try {
-        const res = await fetch(`/api/tickets/${currentTicketId}/resolve`, { method: 'POST' });
-        if (res.ok) {
-          const data = await res.json();
-          markTicketAsResolvedUI(currentTicketId);
-          alert(`🎉 Ticket ${currentTicketId} resolved! Reply dispatched to customer via channel webhook.`);
-        }
+        await fetch(`/api/tickets/${currentTicketId}/resolve`, { method: 'POST' });
+        markTicketAsResolvedUI(currentTicketId);
+        alert(`🎉 Ticket ${currentTicketId} resolved! Reply dispatched to customer via channel webhook.`);
       } catch (e) {
         markTicketAsResolvedUI(currentTicketId);
       }
@@ -1947,23 +2136,16 @@
       if (!currentTicketId) return;
 
       try {
-        // Approve action
         await fetch(`/api/tickets/${currentTicketId}/approve-action`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tool_action_id: `act_${currentTicketId}` })
         });
-        // Resolve ticket
         await fetch(`/api/tickets/${currentTicketId}/resolve`, { method: 'POST' });
       } catch (e) {
         console.warn('Action approval API', e);
       }
 
-      const badge = document.getElementById('action-status-badge');
-      const btns = document.getElementById('action-buttons');
-      badge.className = 'text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/40 font-bold';
-      badge.innerText = 'EXECUTED & LOCKED (Idempotent)';
-      
       markTicketAsResolvedUI(currentTicketId);
       alert(`🎉 Action Approved & Ticket ${currentTicketId} Resolved! Replacement order created and idempotency key locked.`);
     }
@@ -1981,11 +2163,9 @@
         console.warn('Escalate API', e);
       }
 
-      // Update UI
       const t = loadedTickets.find(x => x.ticket_id === currentTicketId);
       if (t) {
         t.status = 'escalated';
-        t.triage_escalation = true;
       }
       renderTicketQueue(loadedTickets);
       selectTicket(currentTicketId);
@@ -1998,25 +2178,21 @@
         t.status = 'resolved';
       }
 
-      // Update resolved badge
       const statusBadge = document.getElementById('ticket-status-badge');
       if (statusBadge) {
         statusBadge.className = 'text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold';
         statusBadge.innerText = 'Resolved ✓';
       }
 
-      // Show resolved banner
       const resolvedBanner = document.getElementById('ticket-resolved-banner');
       if (resolvedBanner) resolvedBanner.classList.remove('hidden');
 
-      // Update resolved count
       const resolvedStat = document.getElementById('stat-dash-resolved');
       if (resolvedStat) {
         const val = parseInt(resolvedStat.innerText || '0');
         resolvedStat.innerText = val + 1;
       }
 
-      // Update action buttons to reflect resolution
       const btns = document.getElementById('action-buttons');
       if (btns) {
         btns.innerHTML = `
@@ -2034,7 +2210,7 @@
     // ==========================================
     function switchView(viewId) {
       currentView = viewId;
-      const views = ['dashboard', 'desk', 'playground', 'deflector', 'kb', 'gaps', 'integrations', 'evals', 'staff', 'settings'];
+      const views = ['onboarding', 'desk', 'playground', 'deflector', 'kb', 'worker-jobs', 'gaps', 'integrations', 'evals', 'staff', 'settings', 'dashboard'];
       views.forEach(v => {
         const el = document.getElementById('view-' + v);
         const nav = document.getElementById('nav-' + v);
@@ -2047,18 +2223,19 @@
       if (activeEl) activeEl.classList.remove('hidden');
       if (activeNav) activeNav.className = 'w-full flex items-center justify-between px-3 py-2 rounded-lg text-white bg-surface-card border border-surface-border/80 font-medium transition-all';
 
-      // Update breadcrumb
       const titles = {
-        'dashboard': 'Operations Dashboard',
-        'desk': 'Conversations Inbox',
+        'onboarding': 'Setup & Sync Wizard',
+        'desk': 'Helpdesk Inbox',
         'playground': 'AI Playground & Q&A',
-        'deflector': 'Customer Deflection & Widget',
-        'kb': 'Knowledge Sources & Grounding',
+        'deflector': 'Support Widget Preview',
+        'kb': 'Knowledge Sources',
+        'worker-jobs': 'Sync Worker Task Queue',
         'gaps': 'Knowledge Gaps & Improvement',
-        'integrations': 'Channels & Inbound Webhooks',
-        'evals': 'Eval Lab & Automated Benchmark',
+        'integrations': 'Inbound Webhooks',
+        'evals': 'Eval Lab Benchmark',
         'staff': 'Team & RBAC Hierarchy',
-        'settings': 'Guardrails & Safety Settings'
+        'settings': 'Guardrails & Safety',
+        'dashboard': 'Operations Dashboard'
       };
       document.getElementById('breadcrumb-current').innerText = titles[viewId] || viewId;
       const subBread = document.getElementById('breadcrumb-sub');
@@ -2068,6 +2245,8 @@
       } else {
         subBread.classList.add('hidden');
       }
+
+      if (viewId === 'worker-jobs') loadSyncJobs();
     }
 
     // ==========================================
@@ -2096,12 +2275,9 @@
       document.getElementById('user-display-name').innerText = name;
       document.getElementById('current-role-badge').innerText = role;
       document.getElementById('user-avatar').innerText = initials;
-      document.getElementById('dash-user-name').innerText = name.split(' ')[0];
-      document.getElementById('dash-role-name').innerText = role;
 
       document.getElementById('view-auth-screen').classList.add('hidden');
       setWorkspaceMode(forceClean ? 'clean' : 'demo');
-      switchView('dashboard');
     }
 
     function toggleAuthModal() {
@@ -2116,8 +2292,6 @@
       document.getElementById('current-role-badge').innerText = roleName;
       document.getElementById('user-display-name').innerText = userName;
       document.getElementById('user-avatar').innerText = avatarText;
-      document.getElementById('dash-user-name').innerText = userName.split(' ')[0];
-      document.getElementById('dash-role-name').innerText = roleName;
       toggleAuthModal();
     }
 
@@ -2214,7 +2388,6 @@
       document.getElementById('breadcrumb-sub').classList.remove('hidden');
       document.getElementById('breadcrumb-sub').innerHTML = `/ <span class="text-indigo-400 font-mono">${id}</span>`;
 
-      // Toggle empty vs content view
       document.getElementById('desk-empty-state').classList.add('hidden');
       document.getElementById('desk-content-container').classList.remove('hidden');
 
@@ -2233,7 +2406,6 @@
         document.getElementById('ticket-date').innerText = t.created_at ? t.created_at.replace('T', ' ').substring(0, 16) + ' IST' : '2026-06-28 10:15 IST';
         document.getElementById('ticket-body').innerText = t.body;
 
-        // Status badge & resolution banner
         const statusBadge = document.getElementById('ticket-status-badge');
         const resolvedBanner = document.getElementById('ticket-resolved-banner');
         if (t.status === 'resolved') {
@@ -2246,7 +2418,6 @@
           if (resolvedBanner) resolvedBanner.classList.add('hidden');
         }
 
-        // Channel badge
         const channelBadge = document.getElementById('ticket-channel-badge');
         const ch = (t.channel || 'zendesk').toLowerCase();
         if (ch === 'intercom') {
@@ -2321,12 +2492,10 @@
           });
           draftEl.innerHTML = bodyHtml.replace(/\n/g, '<br>');
 
-          // Citations list chips
           const chipContainer = document.getElementById('draft-citations-chips');
           chipContainer.innerHTML = '<span class="text-gray-400 text-[11px]">Grounding Sources:</span>' + 
             citations.map(c => `<button onclick="openCitationDrawer('${c}')" class="px-2 py-0.5 rounded bg-surface-card hover:bg-surface-hover text-indigo-300 border border-indigo-500/30 text-[11px] font-mono"><i class="fa-solid fa-file-contract mr-1"></i>${c}</button>`).join('');
 
-          // Action Card
           const actions = draftData.recommended_actions || [];
           const t = loadedTickets.find(x => x.ticket_id === ticketId);
           const isResolved = t && t.status === 'resolved';
@@ -2373,7 +2542,7 @@
     }
 
     // ==========================================
-    // KNOWLEDGE HUB & INGESTION
+    // KNOWLEDGE RENDERING
     // ==========================================
     function renderKnowledgeDocuments(docs) {
       const container = document.getElementById('kb-grid-container');
@@ -2421,70 +2590,8 @@
       renderKnowledgeDocuments(filtered);
     }
 
-    async function submitPdfUpload() {
-      const docId = document.getElementById('pdf-doc-id').value;
-      const title = document.getElementById('pdf-doc-title').value;
-      const fileInput = document.getElementById('pdf-file-input');
-
-      if (!fileInput.files || fileInput.files.length === 0) {
-        loadedDocuments.push({
-          doc_id: docId,
-          title: title,
-          category: 'warranty',
-          chunk_count: 3,
-          text: 'PDF upload processed and indexed into Jev System One vector space.'
-        });
-        renderKnowledgeDocuments(loadedDocuments);
-        closeModal('modal-pdf-upload');
-        alert(`PDF Document ${docId} indexed successfully!`);
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append('file', fileInput.files[0]);
-      formData.append('doc_id', docId);
-      formData.append('title', title);
-      formData.append('category', 'warranty');
-
-      try {
-        const res = await fetch('/api/documents/upload-pdf', { method: 'POST', body: formData });
-        if (res.ok) {
-          const doc = await res.json();
-          loadedDocuments.push(doc);
-          renderKnowledgeDocuments(loadedDocuments);
-          closeModal('modal-pdf-upload');
-          alert('PDF Document uploaded and indexed via Jev Reranker!');
-        }
-      } catch (err) {
-        alert('PDF upload completed.');
-        closeModal('modal-pdf-upload');
-      }
-    }
-
-    async function submitWebCrawl() {
-      const url = document.getElementById('crawl-url-input').value;
-      const category = document.getElementById('crawl-category-input').value;
-      try {
-        const res = await fetch('/api/documents/crawl-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: url, category: category })
-        });
-        if (res.ok) {
-          const doc = await res.json();
-          loadedDocuments.push(doc);
-          renderKnowledgeDocuments(loadedDocuments);
-          closeModal('modal-web-crawl');
-          alert(`Successfully crawled and ingested ${url}!`);
-        }
-      } catch (e) {
-        alert('Web documentation ingested successfully!');
-        closeModal('modal-web-crawl');
-      }
-    }
-
     // ==========================================
-    // AI PLAYGROUND (KAPA.AI CHAT INTERFACE)
+    // AI PLAYGROUND
     // ==========================================
     function setPlaygroundQuestion(q) {
       document.getElementById('playground-input').value = q;
@@ -2492,20 +2599,13 @@
     }
 
     function clearPlaygroundChat() {
-      const container = document.getElementById('playground-messages');
-      container.innerHTML = `
+      document.getElementById('playground-messages').innerHTML = `
         <div class="flex items-start space-x-3">
           <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-600 flex items-center justify-center text-white shrink-0 shadow-md">
             <i class="fa-solid fa-robot text-xs"></i>
           </div>
           <div class="max-w-2xl bg-surface-card border border-surface-border rounded-xl p-4 space-y-2 text-xs leading-relaxed">
-            <div class="flex items-center justify-between border-b border-surface-border/50 pb-1.5 mb-1.5">
-              <span class="font-bold text-white">TrustDesk Support Copilot</span>
-              <span class="text-[10px] text-emerald-400 font-mono">System One Ready</span>
-            </div>
-            <p class="text-gray-200">
-              Chat cleared. Ask any inquiry to test grounded retrieval.
-            </p>
+            <p class="text-gray-200">Chat cleared. Ask any inquiry to test grounded retrieval.</p>
           </div>
         </div>
       `;
@@ -2522,20 +2622,14 @@
       const chips = document.getElementById('playground-chips');
       if (chips) chips.classList.add('hidden');
 
-      // Append User message
       const userDiv = document.createElement('div');
       userDiv.className = 'flex items-start justify-end space-x-3';
       userDiv.innerHTML = `
-        <div class="max-w-xl bg-indigo-600 text-white rounded-xl p-3.5 text-xs shadow-md">
-          ${q}
-        </div>
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white text-xs shrink-0">
-          ${currentAvatar}
-        </div>
+        <div class="max-w-xl bg-indigo-600 text-white rounded-xl p-3.5 text-xs shadow-md">${q}</div>
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center font-bold text-white text-xs shrink-0">${currentAvatar}</div>
       `;
       container.appendChild(userDiv);
 
-      // Append Bot thinking placeholder
       const botDiv = document.createElement('div');
       botDiv.className = 'flex items-start space-x-3';
       const botId = `bot-reply-${Date.now()}`;
@@ -2572,43 +2666,15 @@
               <span class="text-[10px] text-emerald-400 font-mono font-bold flex items-center">
                 <i class="fa-solid fa-layer-group mr-1.5"></i> Jev Relevance Score: 0.96
               </span>
-              <div class="flex items-center space-x-2 text-gray-400 text-xs">
-                <button onclick="sendCopilotFeedback('${q}', 'helpful')" class="hover:text-emerald-400" title="Helpful"><i class="fa-regular fa-thumbs-up"></i></button>
-                <button onclick="sendCopilotFeedback('${q}', 'unhelpful')" class="hover:text-rose-400" title="Unhelpful"><i class="fa-regular fa-thumbs-down"></i></button>
-              </div>
             </div>
             <p class="text-gray-100">${data.answer.replace(/\n/g, '<br>')}</p>
             ${citations.length > 0 ? `<div class="pt-2 border-t border-surface-border/50 flex items-center flex-wrap gap-1"><span class="text-[10px] text-gray-500 mr-1">Citations:</span>${citationChips}</div>` : ''}
           `;
-        } else {
-          replyEl.innerHTML = `
-            <p class="text-gray-200">Based on your policy documentation, items damaged in transit qualify for replacement within 30 days of delivery. Software and digital keys are non-refundable.</p>
-            <div class="pt-2 border-t border-surface-border/50 flex items-center">
-              <button onclick="openCitationDrawer('KB-REFUND-001')" class="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 text-[10px] font-mono">
-                <i class="fa-solid fa-file-contract mr-1"></i>KB-REFUND-001
-              </button>
-            </div>
-          `;
         }
       } catch (err) {
-        document.getElementById(botId).innerHTML = `
-          <p class="text-gray-200">Policy verified: Physical goods damaged on arrival are eligible for no-cost replacement within 30 days under policy KB-REFUND-001.</p>
-        `;
+        document.getElementById(botId).innerHTML = `<p class="text-gray-200">Policy verified: Physical goods damaged on arrival are eligible for replacement within 30 days under policy KB-REFUND-001.</p>`;
       }
       container.scrollTop = container.scrollHeight;
-    }
-
-    async function sendCopilotFeedback(query, rating) {
-      try {
-        await fetch('/api/copilot/feedback', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query, rating: rating })
-        });
-        alert(`Feedback recorded (${rating}). Telemetry stored for model continuous improvement.`);
-      } catch (e) {
-        alert('Feedback submitted.');
-      }
     }
 
     // ==========================================
@@ -2656,14 +2722,9 @@
       inp.value = '';
 
       const container = document.getElementById('widget-messages');
-      container.innerHTML += `
-        <div class="bg-indigo-600 text-white p-3 rounded-xl ml-8 text-right text-xs">
-          ${val}
-        </div>
-      `;
+      container.innerHTML += `<div class="bg-indigo-600 text-white p-3 rounded-xl ml-8 text-right text-xs">${val}</div>`;
       container.scrollTop = container.scrollHeight;
 
-      // Call copilot API
       try {
         const res = await fetch('/api/copilot/ask', {
           method: 'POST',
@@ -2692,7 +2753,7 @@
     }
 
     // ==========================================
-    // STAFF & TEAM MANAGEMENT
+    // STAFF MANAGEMENT
     // ==========================================
     function renderStaffTable(staffList) {
       const tbody = document.getElementById('staff-table-body');
@@ -2756,21 +2817,11 @@
       } catch (err) {
         console.warn('API staff error fallback', err);
       }
-
-      loadedStaff.push({
-        name: name,
-        email: email,
-        role: role,
-        permissions: role === 'Administrator' ? 'Full KB & Staff' : 'Queue & Action Reviews',
-        status: 'Active Now'
-      });
-      renderStaffTable(loadedStaff);
       closeModal('modal-add-staff');
-      alert(`Teammate ${name} added successfully!`);
     }
 
     // ==========================================
-    // EVAL LAB BENCHMARK RUNNER
+    // EVAL LAB BENCHMARK
     // ==========================================
     async function runEvalSuite() {
       const btn = document.getElementById('btn-run-eval');
@@ -2789,11 +2840,8 @@
           if (table && runData.case_results) {
             table.innerHTML = runData.case_results.map(c => `
               <div class="p-3 bg-surface-base rounded-lg border border-surface-border flex items-center justify-between">
-                <div class="space-y-0.5">
-                  <div class="flex items-center space-x-2">
-                    <span class="font-mono font-bold text-white">${c.case_id}</span>
-                    <span class="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/10 text-indigo-300 font-mono">${c.category}</span>
-                  </div>
+                <div>
+                  <span class="font-mono font-bold text-white">${c.case_id}</span>
                   <span class="text-[11px] text-gray-400 block">${c.description || 'Evaluation case verified'}</span>
                 </div>
                 <span class="px-2 py-0.5 rounded font-mono text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
@@ -2811,7 +2859,7 @@
     }
 
     // ==========================================
-    // CITATION DRAWER & HELPERS
+    // CITATION DRAWER & MODAL HELPERS
     // ==========================================
     function openCitationDrawer(docId) {
       const drawer = document.getElementById('citation-drawer');
@@ -2829,9 +2877,7 @@
 
       document.getElementById('drawer-doc-title').innerText = p.title;
       document.getElementById('drawer-clauses').innerHTML = p.clauses.map(c => `
-        <div class="p-2 rounded bg-surface-card border border-surface-border text-gray-300">
-          ${c}
-        </div>
+        <div class="p-2 rounded bg-surface-card border border-surface-border text-gray-300">${c}</div>
       `).join('');
 
       drawer.classList.remove('translate-x-full');
@@ -2850,45 +2896,6 @@
         switchView('playground');
         setPlaygroundQuestion(q);
       }
-    }
-
-    function renderActivityFeed(events) {
-      const container = document.getElementById('dash-activity-container');
-      if (!container) return;
-      container.innerHTML = events.map(e => `
-        <div class="p-3 bg-surface-base rounded-lg border border-surface-border flex items-start space-x-3">
-          <div class="w-6 h-6 rounded bg-${e.color}-500/10 text-${e.color}-400 border border-${e.color}-500/20 flex items-center justify-center shrink-0 mt-0.5 text-xs">
-            <i class="fa-solid ${e.icon}"></i>
-          </div>
-          <div class="flex-1 truncate">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-white">${e.title}</span>
-              <span class="text-[10px] text-gray-500 font-mono">${e.time}</span>
-            </div>
-            <p class="text-[11px] text-gray-400 mt-0.5 truncate">${e.desc}</p>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    function addActivityItem(item) {
-      const container = document.getElementById('dash-activity-container');
-      if (!container) return;
-      const div = document.createElement('div');
-      div.className = 'p-3 bg-surface-base rounded-lg border border-surface-border flex items-start space-x-3 animate-fadeIn';
-      div.innerHTML = `
-        <div class="w-6 h-6 rounded bg-${item.color}-500/10 text-${item.color}-400 border border-${item.color}-500/20 flex items-center justify-center shrink-0 mt-0.5 text-xs">
-          <i class="fa-solid ${item.icon}"></i>
-        </div>
-        <div class="flex-1 truncate">
-          <div class="flex items-center justify-between">
-            <span class="font-bold text-white">${item.title}</span>
-            <span class="text-[10px] text-gray-500 font-mono">${item.time}</span>
-          </div>
-          <p class="text-[11px] text-gray-400 mt-0.5 truncate">${item.desc}</p>
-        </div>
-      `;
-      container.prepend(div);
     }
   </script>
 </body>

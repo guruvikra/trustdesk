@@ -476,3 +476,69 @@ def test_root_canonical_routes(client):
     e_resp = client.get("/eval-runs")
     assert e_resp.status_code == 200
 
+# -------------------------------------------------------------
+# 16. Asynchronous Background Knowledge Sync Worker
+# -------------------------------------------------------------
+def test_knowledge_sync_worker_async(client):
+    import time
+    # Submit async pack sync job
+    payload = {
+        "source_type": "pack",
+        "source_name": "Enterprise Returns and Battery Safety Policy Pack"
+    }
+    resp = client.post("/api/documents/sync-async", json=payload)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "queued"
+    job_id = data["job_id"]
+    assert job_id.startswith("job_")
+
+    # Verify job in list
+    jobs_resp = client.get("/api/documents/sync-jobs")
+    assert jobs_resp.status_code == 200
+    all_jobs = jobs_resp.json()
+    assert any(j["job_id"] == job_id for j in all_jobs)
+
+    # Wait briefly for worker thread to process
+    time.sleep(0.4)
+
+    # Check status of specific job
+    status_resp = client.get(f"/api/documents/sync-jobs/{job_id}")
+    assert status_resp.status_code == 200
+    job_status = status_resp.json()
+    assert job_status["job_id"] == job_id
+    assert job_status["progress_pct"] >= 0
+    assert "stage" in job_status
+
+    # Check 404 for non-existent job
+    bad_resp = client.get("/api/documents/sync-jobs/job_nonexistent_xyz")
+    assert bad_resp.status_code == 404
+
+# -------------------------------------------------------------
+# 17. Ticket Resolve & Escalate Operations
+# -------------------------------------------------------------
+def test_ticket_resolve_and_escalate(client):
+    # 1. Resolve ticket
+    res_resp = client.post("/api/tickets/tkt_9001/resolve")
+    assert res_resp.status_code == 200
+    res_data = res_resp.json()
+    assert res_data["status"] == "success"
+    assert res_data["ticket"]["status"] == "resolved"
+
+    # Verify status changed in GET /tickets
+    tkt_resp = client.get("/api/tickets/tkt_9001")
+    assert tkt_resp.status_code == 200
+    assert tkt_resp.json()["status"] == "resolved"
+
+    # 2. Escalate ticket
+    esc_resp = client.post("/api/tickets/tkt_9002/escalate", json={"reason": "Customer requested manager"})
+    assert esc_resp.status_code == 200
+    esc_data = esc_resp.json()
+    assert esc_data["status"] == "success"
+    assert esc_data["ticket"]["status"] == "escalated"
+
+    # Verify 404 on invalid ticket
+    bad_res = client.post("/api/tickets/tkt_invalid_9999/resolve")
+    assert bad_res.status_code == 404
+
+
