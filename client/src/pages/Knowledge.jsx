@@ -10,6 +10,7 @@ function AddSource({ onIngested }) {
   const [visibility, setVisibility] = useState('public');
   const [files, setFiles] = useState([]);
   const [url, setUrl] = useState('');
+  const [crawl, setCrawl] = useState(true);
   const [paste, setPaste] = useState({ title: '', doc_id: '', content: '' });
   const [job, setJob] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -32,7 +33,7 @@ function AddSource({ onIngested }) {
         form.append('visibility', visibility);
         out = await api('/api/documents/ingest', { method: 'POST', form });
       } else if (tab === 'url') {
-        out = await api('/api/documents/ingest', { method: 'POST', body: { url, visibility } });
+        out = await api('/api/documents/ingest', { method: 'POST', body: { url, visibility, crawl, max_pages: 20 } });
       } else {
         out = await api('/api/documents/ingest', { method: 'POST', body: { documents: [{ ...paste, doc_id: paste.doc_id || undefined, visibility }] } });
       }
@@ -56,7 +57,12 @@ function AddSource({ onIngested }) {
           <div className="small muted mt">PDF, Markdown, text or HTML — up to 10 files, 15 MB each. Use "Doc ID: KB-XXX-001" in a header line to set your own IDs.</div>
         </div>
       )}
-      {tab === 'url' && <input className="input" placeholder="https://help.yourcompany.com/returns" value={url} onChange={e => setUrl(e.target.value)} />}
+      {tab === 'url' && (
+        <div className="stack" style={{ gap: 8 }}>
+          <input className="input" placeholder="https://docs.yourcompany.com" value={url} onChange={e => setUrl(e.target.value)} />
+          <label className="row small"><input type="checkbox" checked={crawl} onChange={e => setCrawl(e.target.checked)} /> Also import linked pages in the same section (up to 20 pages, one document each)</label>
+        </div>
+      )}
       {tab === 'paste' && (
         <div className="stack">
           <div className="grid g2">

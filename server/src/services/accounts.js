@@ -175,7 +175,9 @@ function removeMember(orgId, userId, actor) {
   return { removed: userId };
 }
 
+const listOrgIds = () => store.all('SELECT org_id FROM orgs').map(r => r.org_id);
+
 module.exports = {
-  init, signup, login, logout, sessionUser, getOrgByKey, renameOrg, listTeam, invite, setRole, removeMember,
+  listOrgIds, init, signup, login, logout, sessionUser, getOrgByKey, renameOrg, listTeam, invite, setRole, removeMember,
   DEMO_ACCOUNTS, publicOrg, getOrg, ROLES,
 };

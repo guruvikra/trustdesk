@@ -362,6 +362,32 @@ async function syncIntegration(platform) {
   return result;
 }
 
+// Background auto-import: every connected helpdesk in every workspace is checked periodically,
+// so a ticket created in Zendesk/Freshdesk/Intercom/Front reaches Autopilot within seconds.
+let autoSyncRunning = false;
+async function autoSyncAll() {
+  if (autoSyncRunning) return;
+  autoSyncRunning = true;
+  const { openTenant, withTenant } = require('../db');
+  try {
+    for (const orgId of require('./accounts').listOrgIds()) {
+      const tdb = await openTenant(orgId);
+      await withTenant(orgId, tdb, async () => {
+        const rows = db.all('SELECT platform, config_json FROM integrations WHERE enabled = 1');
+        for (const r of rows) {
+          if (!HELPDESKS.includes(r.platform) || parseJson(r.config_json, {}).auto_sync === false) continue;
+          try { await syncIntegration(r.platform); } catch (e) { /* recorded in last_result by syncIntegration */ }
+        }
+      });
+    }
+  } finally { autoSyncRunning = false; }
+}
+
+function startAutoSync(intervalMs = Number(process.env.AUTO_SYNC_SECONDS || 20) * 1000) {
+  if (intervalMs <= 0) return null;
+  return setInterval(() => autoSyncAll().catch(e => console.error('[auto-sync]', e.message)), intervalMs);
+}
+
 // Used when an agent sends a reply on a ticket imported from a helpdesk.
 // If the source app is not connected (e.g. a webhook-tester ticket), the reply is kept in TrustDesk only.
 async function pushReply(ticket, body, opts) {
@@ -472,6 +498,6 @@ function normalizeWebhook(platform, p) {
 }
 
 module.exports = {
-  isConnected, listIntegrations, saveIntegration, disableIntegration, testIntegration, syncIntegration, pushReply, normalizeWebhook,
+  autoSyncAll, startAutoSync, isConnected, listIntegrations, saveIntegration, disableIntegration, testIntegration, syncIntegration, pushReply, normalizeWebhook,
   createLinearIssue, externalLinks, startOAuth, consumeState, finishOAuth, PLATFORMS, HELPDESKS,
 };

@@ -62,9 +62,12 @@ router.post('/documents/ingest', upload.array('files'), tenantScope, (req, res) 
       return docs;
     });
   } else if (b.url) {
+    const crawl = b.crawl === true || b.crawl === 'true';
+    const maxPages = Math.min(50, Math.max(1, Number(b.max_pages) || 20));
     jobId = ingest.submitIngestJob(b.url, async (log) => {
-      const ex = await ingest.fetchUrl(b.url);
-      log(`Fetched ${ex.content.length} characters from ${b.url}`);
+      if (crawl) return (await ingest.crawlSite(b.url, { maxPages, log })).map(d => ({ ...d, visibility }));
+      const { links, ...ex } = await ingest.fetchUrl(b.url);
+      log(`Fetched ${ex.content.length} characters from ${ex.source_path}`);
       return [{ ...ex, visibility }];
     });
   } else {

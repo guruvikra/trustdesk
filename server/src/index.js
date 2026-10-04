@@ -12,6 +12,7 @@ async function start() {
   await accounts.init();
   const counts = ensureSeeded();
   const app = createApp();
+  require('./services/connectors').startAutoSync();
   app.listen(PORT, () => {
     const cfg = llm.config();
     console.log(`TrustDesk running on http://localhost:${PORT}`);

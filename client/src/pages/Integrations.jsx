@@ -109,7 +109,7 @@ function ConnectDrawer({ app, canEdit, onClose, onChange }) {
               </div>
               {app.last_sync_at && <div className="tiny muted mt">Last import {fmtTime(app.last_sync_at)}{app.last_result && app.last_result.message ? ` — ${app.last_result.message}` : ''}</div>}
               <div className="tiny muted mt">
-                {app.capabilities.import ? `Imported conversations are triaged and drafted like any ticket. Sending a reply from TrustDesk posts it back to ${app.label} and resolves it there.` : 'Open any ticket and use "Create Linear issue" to escalate it to engineering with full context.'}
+                {app.capabilities.import ? `New ${app.label} tickets are imported automatically every 20 seconds and go through Autopilot. Sending a reply from TrustDesk posts it back to ${app.label} and resolves it there.` : 'Open any ticket and use "Create Linear issue" to escalate it to engineering with full context.'}
               </div>
             </Card>
           )}

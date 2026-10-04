@@ -235,11 +235,45 @@ async function fetchUrl(url, hops = 0) {
     const type = res.headers.get('content-type') || '';
     if (type.includes('pdf')) return extractFile({ originalname: 'page.pdf', buffer: Buffer.from(await res.arrayBuffer()), mimetype: 'application/pdf' });
     const text = await res.text();
+    // Follow HTML/JS redirect pages (<meta http-equiv="refresh" ...>) used by many docs sites.
+    const refresh = type.includes('html') && text.length < 5000 && (text.match(/http-equiv=["']?refresh["']?[^>]*content=["'][^"']*url=([^"'>\s]+)/i) || [])[1];
+    if (refresh && hops < 3) return fetchUrl(new URL(refresh, url).toString(), hops + 1);
     const parsed = type.includes('html') ? htmlToText(text) : { title: null, content: text };
-    return { title: parsed.title || new URL(url).hostname + new URL(url).pathname, content: parsed.content, source_type: 'url', source_path: url };
+    if (type.includes('html')) parsed.links = [...text.matchAll(/<a\s[^>]*href=["']([^"'#]+)/gi)].map(m => { try { return new URL(m[1], res.url || url).toString(); } catch (_) { return null; } }).filter(Boolean);
+    parsed.finalUrl = url;
+    return { title: parsed.title || new URL(url).hostname + new URL(url).pathname, content: parsed.content, source_type: 'url', source_path: url, links: parsed.links || [] };
   } finally {
     clearTimeout(timer);
   }
 }
 
-module.exports = { extractFile, fetchUrl, htmlToText, upsertDocument, loadKnowledgeBaseFolder, submitIngestJob, getJob, chunkMarkdown, parseMarkdownDoc };
+// Crawls a docs site: the start page plus linked pages in the same section (same host and path
+// prefix), breadth-first, a few at a time. Each page becomes one document.
+async function crawlSite(startUrl, { maxPages = 20, log = () => {} } = {}) {
+  const first = await fetchUrl(startUrl);
+  const base = new URL(first.source_path);
+  const prefix = base.pathname.endsWith('/') ? base.pathname : base.pathname.replace(/[^/]*$/, '');
+  const norm = u => { const x = new URL(u); x.hash = ''; x.search = ''; return x.toString().replace(/\/$/, ''); };
+  const seen = new Set([norm(first.source_path)]);
+  const docs = [];
+  const queue = [];
+  const accept = (page) => {
+    if (page.content && page.content.trim().length > 80) { docs.push(page); log(`Fetched ${page.source_path} (${page.content.length} characters)`); }
+    for (const l of page.links || []) {
+      let u; try { u = new URL(l); } catch (_) { continue; }
+      if (u.host !== base.host || !u.pathname.startsWith(prefix) || /\.(png|jpe?g|gif|svg|css|js|ico|zip|mp4|woff2?)$/i.test(u.pathname)) continue;
+      const k = norm(u.toString());
+      if (!seen.has(k)) { seen.add(k); queue.push(u.toString()); }
+    }
+  };
+  accept(first);
+  log(`Start page ${first.source_path} → found ${queue.length} linked pages in ${prefix}`);
+  while (queue.length && docs.length < maxPages) {
+    const batch = queue.splice(0, Math.min(4, maxPages - docs.length));
+    const pages = await Promise.all(batch.map(u => fetchUrl(u).catch(e => { log(`Skipped ${u}: ${e.message}`); return null; })));
+    pages.filter(Boolean).forEach(accept);
+  }
+  return docs.slice(0, maxPages).map(({ links, ...d }) => d);
+}
+
+module.exports = { crawlSite, extractFile, fetchUrl, htmlToText, upsertDocument, loadKnowledgeBaseFolder, submitIngestJob, getJob, chunkMarkdown, parseMarkdownDoc };
