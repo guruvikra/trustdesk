@@ -28,19 +28,68 @@ import {
   ArrowRight,
   Building2,
   User,
-  MessageSquare
+  MessageSquare,
+  LogOut,
+  ChevronDown,
+  Lock,
+  Mail,
+  HelpCircle,
+  X
 } from 'lucide-react';
 
 const API_BASE = '';
 
+const DEMO_PERSONAS = [
+  {
+    id: 'usr_001',
+    name: 'Nikhil S',
+    email: 'nikhil@atatus.com',
+    role: 'admin',
+    title: 'System Administrator',
+    badgeColor: 'border-kelu-500 text-kelu-100 bg-kelu-500/20',
+    description: 'Full authority: manage knowledge bases, trigger benchmarks, manage staff RBAC.'
+  },
+  {
+    id: 'usr_002',
+    name: 'Janani S',
+    email: 'jananis@atatus.com',
+    role: 'support_manager',
+    title: 'Support Manager',
+    badgeColor: 'border-emerald-500 text-emerald-300 bg-emerald-950/40',
+    description: 'Supervisor authority: authorize approval-gated replacement orders & refund reviews.'
+  },
+  {
+    id: 'usr_003',
+    name: 'Parthasarathi',
+    email: 'parthasarathi@atatus.com',
+    role: 'support_agent',
+    title: 'Frontline Support Agent',
+    badgeColor: 'border-blue-500 text-blue-300 bg-blue-950/40',
+    description: 'Agent authority: triage customer queue, generate cited drafts, 1-click resolve.'
+  }
+];
+
 export default function App() {
+  // Auth state
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trustdesk_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch (_) {
+      return null;
+    }
+  });
+
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+
+  // App navigation & data state
   const [view, setView] = useState('dashboard');
   const [tickets, setTickets] = useState([]);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [ticketFilter, setTicketFilter] = useState('all');
   const [documents, setDocuments] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
   const [staff, setStaff] = useState([]);
   const [evalReport, setEvalReport] = useState(null);
   const [syncJobs, setSyncJobs] = useState([]);
@@ -61,17 +110,75 @@ export default function App() {
   const [citations, setCitations] = useState([]);
   const [guardrails, setGuardrails] = useState(null);
 
-  // Load initial data
+  // Floating widget state
+  const [widgetOpen, setWidgetOpen] = useState(false);
+  const [widgetMessages, setWidgetMessages] = useState([
+    {
+      sender: 'bot',
+      text: 'Hi there! I am TrustDesk AI, grounded strictly in company return and warranty policy. How can I help you today?'
+    }
+  ]);
+  const [widgetInput, setWidgetInput] = useState('');
+
+  // Onboarding wizard state
+  const [onboardingStep, setOnboardingStep] = useState(1);
+  const [customCrawlUrl, setCustomCrawlUrl] = useState('https://docs.atatus.com/knowledge');
+
+  // Load initial data if logged in
   useEffect(() => {
-    fetchTickets();
-    fetchDocuments();
-    fetchStaff();
-    fetchSyncJobs();
-  }, []);
+    if (currentUser) {
+      fetchTickets();
+      fetchDocuments();
+      fetchStaff();
+      fetchSyncJobs();
+    }
+  }, [currentUser]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3500);
+  };
+
+  const handleLogin = (persona) => {
+    const user = persona || {
+      id: 'usr_custom',
+      name: loginEmail.split('@')[0] || 'Support Specialist',
+      email: loginEmail || 'agent@atatus.com',
+      role: 'admin',
+      title: 'Administrator'
+    };
+    setCurrentUser(user);
+    localStorage.setItem('trustdesk_user', JSON.stringify(user));
+    showToast(`Signed in successfully as ${user.name} (${user.role.toUpperCase()})`);
+    setView('dashboard');
+  };
+
+  const handleStartOnboarding = () => {
+    const onboardingUser = {
+      id: 'usr_onboarding',
+      name: 'New Tenant Admin',
+      email: 'founder@newtenant.io',
+      role: 'admin',
+      title: 'Workspace Owner'
+    };
+    setCurrentUser(onboardingUser);
+    localStorage.setItem('trustdesk_user', JSON.stringify(onboardingUser));
+    setOnboardingStep(1);
+    setView('onboarding');
+    showToast('Started Guided SaaS Onboarding Funnel');
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('trustdesk_user');
+    showToast('Signed out of TrustDesk workspace');
+  };
+
+  const handleSwitchPersona = (persona) => {
+    setCurrentUser(persona);
+    localStorage.setItem('trustdesk_user', JSON.stringify(persona));
+    setShowRoleDropdown(false);
+    showToast(`Switched active persona to ${persona.name} (${persona.title})`);
   };
 
   const fetchTickets = async () => {
@@ -134,13 +241,16 @@ export default function App() {
               showToast('Background Sync Worker successfully indexed knowledge base!');
               fetchDocuments();
               fetchSyncJobs();
+              if (view === 'onboarding' && onboardingStep === 2) {
+                setOnboardingStep(3);
+              }
             }
           }
         } catch (_) {}
-      }, 800);
+      }, 700);
     }
     return () => clearInterval(interval);
-  }, [activeJob]);
+  }, [activeJob, view, onboardingStep]);
 
   const selectedTicket = tickets.find((t) => t.ticket_id === selectedTicketId);
 
@@ -204,14 +314,14 @@ export default function App() {
   };
 
   // Start async sync worker job
-  const triggerWorkerSync = async () => {
+  const triggerWorkerSync = async (sourceName = 'Enterprise Policies & Returns Documentation') => {
     try {
       const res = await fetch(`${API_BASE}/api/documents/sync-async`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           source_type: 'pack',
-          source_name: 'Enterprise Policies & Returns Documentation'
+          source_name: sourceName
         })
       });
       const data = await res.json();
@@ -285,6 +395,38 @@ export default function App() {
     }
   };
 
+  // Send message inside floating widget
+  const handleWidgetSend = async (e) => {
+    e.preventDefault();
+    const query = widgetInput.trim();
+    if (!query) return;
+
+    setWidgetMessages((prev) => [...prev, { sender: 'user', text: query }]);
+    setWidgetInput('');
+
+    try {
+      const res = await fetch(`${API_BASE}/api/copilot/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
+      setWidgetMessages((prev) => [
+        ...prev,
+        {
+          sender: 'bot',
+          text: data.answer,
+          citations: data.citations
+        }
+      ]);
+    } catch (e) {
+      setWidgetMessages((prev) => [
+        ...prev,
+        { sender: 'bot', text: 'Sorry, I encountered an issue connecting to the policy engine.' }
+      ]);
+    }
+  };
+
   // Inbound webhook simulation
   const simulateWebhook = async (platform) => {
     try {
@@ -335,8 +477,125 @@ export default function App() {
     return t.status === ticketFilter;
   });
 
+  // -------------------------------------------------------------------
+  // 1. AUTH SCREEN (Rendered if not logged in)
+  // -------------------------------------------------------------------
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen w-screen bg-[#070B13] flex flex-col justify-center items-center px-4 font-sans select-none relative overflow-hidden">
+        {/* Glow backdrop */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[350px] bg-kelu-500/10 blur-[130px] rounded-full pointer-events-none" />
+
+        {/* Auth Box */}
+        <div className="w-full max-w-md rounded-2xl border border-surface-border bg-surface-card p-8 shadow-2xl relative z-10">
+          {/* Logo & Headline */}
+          <div className="text-center mb-6">
+            <div className="h-12 w-12 rounded-xl bg-kelu-500 mx-auto flex items-center justify-center font-bold text-white shadow-lg shadow-kelu-500/30 text-lg mb-3">
+              TD
+            </div>
+            <h1 className="text-xl font-bold text-white tracking-tight flex items-center justify-center gap-2">
+              TrustDesk
+              <span className="text-[10px] bg-kelu-500/20 text-kelu-100 px-2 py-0.5 rounded font-mono font-bold border border-kelu-500/40">
+                KELU ARCHITECTURE
+              </span>
+            </h1>
+            <p className="text-xs text-gray-400 mt-1.5">Sign in to your enterprise AI support operations workspace</p>
+          </div>
+
+          {/* Form */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleLogin();
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block text-xs font-semibold text-gray-300 mb-1">Work Email</label>
+              <div className="relative">
+                <Mail className="h-4 w-4 text-gray-500 absolute left-3 top-3" />
+                <input
+                  type="email"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="name@company.com"
+                  className="w-full bg-surface-base border border-surface-border rounded-lg pl-9 pr-3 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-kelu-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-300 mb-1">Password</label>
+              <div className="relative">
+                <Lock className="h-4 w-4 text-gray-500 absolute left-3 top-3" />
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  placeholder="••••••••••••"
+                  className="w-full bg-surface-base border border-surface-border rounded-lg pl-9 pr-3 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-kelu-500"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full bg-kelu-500 hover:bg-kelu-600 text-white font-semibold text-xs py-2.5 rounded-lg shadow-lg shadow-kelu-500/25 transition-all"
+            >
+              Sign In to Workspace
+            </button>
+          </form>
+
+          {/* Persona Quick Sign-In */}
+          <div className="mt-6 pt-5 border-t border-surface-border">
+            <div className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider text-center mb-3">
+              Or Instant One-Click Demo Sign-In
+            </div>
+            <div className="space-y-2">
+              {DEMO_PERSONAS.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => handleLogin(p)}
+                  className="w-full p-2.5 rounded-lg border border-surface-border bg-surface-base hover:bg-surface-hover hover:border-kelu-500/50 flex items-center justify-between text-left transition-all group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="h-7 w-7 rounded-full bg-surface-card flex items-center justify-center text-xs font-bold text-gray-300 group-hover:text-kelu-100">
+                      {p.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="text-xs font-medium text-white group-hover:text-kelu-100">{p.name}</div>
+                      <div className="text-[10px] text-gray-400">{p.email}</div>
+                    </div>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded border ${p.badgeColor}`}>
+                    {p.title}
+                  </span>
+                </button>
+              ))}
+
+              <button
+                onClick={handleStartOnboarding}
+                className="w-full p-2.5 rounded-lg border border-kelu-500/40 bg-indigo-950/20 hover:bg-indigo-950/40 text-kelu-100 text-xs font-semibold flex items-center justify-center gap-2 transition-all mt-1"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Start New Tenant Onboarding Tour</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-5 text-center text-[10px] text-gray-500 font-mono">
+            SSO (SAML/OIDC) • RBAC Enforced • WASM SQLite
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------------------
+  // 2. MAIN LOGGED-IN WORKSPACE
+  // -------------------------------------------------------------------
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-surface-base font-sans">
+    <div className="flex h-screen w-screen overflow-hidden bg-surface-base font-sans relative">
       {/* Toast Alert */}
       {toast && (
         <div
@@ -508,21 +767,67 @@ export default function App() {
             <Users className="h-4 w-4" />
             <span>Team & Staff</span>
           </button>
+
+          {/* Guided Onboarding Link */}
+          <button
+            onClick={() => setView('onboarding')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
+              view === 'onboarding'
+                ? 'bg-kelu-500 text-white shadow-md shadow-kelu-500/20'
+                : 'text-kelu-100 hover:bg-surface-hover'
+            }`}
+          >
+            <Sparkles className="h-4 w-4 text-kelu-500" />
+            <span>Onboarding Tour</span>
+          </button>
         </nav>
 
-        {/* User Footer */}
-        <div className="p-3 border-t border-surface-border">
-          <div className="flex items-center gap-3 rounded-lg border border-surface-border bg-surface-card/60 p-2.5">
-            <div className="h-8 w-8 rounded-full bg-kelu-500/20 border border-kelu-500 flex items-center justify-center font-bold text-xs text-kelu-100">
-              NS
+        {/* User Footer with Role Switcher & Log Out */}
+        <div className="p-3 border-t border-surface-border relative">
+          {showRoleDropdown && (
+            <div className="absolute bottom-16 left-3 right-3 rounded-xl border border-surface-border bg-surface-card p-2 shadow-2xl space-y-1 z-30">
+              <div className="text-[10px] font-semibold text-gray-400 uppercase px-2 py-1">
+                Switch Demo Persona
+              </div>
+              {DEMO_PERSONAS.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => handleSwitchPersona(p)}
+                  className={`w-full text-left p-2 rounded-lg text-xs flex items-center justify-between transition-all ${
+                    currentUser.id === p.id ? 'bg-kelu-500 text-white' : 'hover:bg-surface-hover text-gray-300'
+                  }`}
+                >
+                  <span className="font-medium">{p.name}</span>
+                  <span className="text-[10px] opacity-80 font-mono capitalize">{p.role}</span>
+                </button>
+              ))}
             </div>
-            <div className="truncate flex-1">
-              <div className="text-xs font-medium text-white truncate">Nikhil S</div>
-              <div className="text-[10px] text-gray-400 truncate">Administrator</div>
-            </div>
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-border text-emerald-400">
-              Active
-            </span>
+          )}
+
+          <div className="rounded-lg border border-surface-border bg-surface-card/60 p-2.5 flex items-center justify-between">
+            <button
+              onClick={() => setShowRoleDropdown(!showRoleDropdown)}
+              className="flex items-center gap-2.5 truncate text-left hover:opacity-80 transition-opacity"
+            >
+              <div className="h-8 w-8 rounded-full bg-kelu-500/20 border border-kelu-500 flex items-center justify-center font-bold text-xs text-kelu-100">
+                {currentUser.name.substring(0, 2).toUpperCase()}
+              </div>
+              <div className="truncate">
+                <div className="text-xs font-semibold text-white truncate flex items-center gap-1">
+                  {currentUser.name}
+                  <ChevronDown className="h-3 w-3 text-gray-400" />
+                </div>
+                <div className="text-[10px] text-gray-400 capitalize">{currentUser.role.replace('_', ' ')}</div>
+              </div>
+            </button>
+
+            <button
+              onClick={handleLogout}
+              title="Sign Out"
+              className="p-1.5 rounded-lg hover:bg-surface-hover text-gray-400 hover:text-rose-400 transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </aside>
@@ -542,15 +847,16 @@ export default function App() {
               {view === 'evals' && 'Evaluation & Regression Benchmark Lab'}
               {view === 'traces' && 'Minimal Traces & Guardrail Telemetry'}
               {view === 'team' && 'Role-Based Access Control (RBAC)'}
+              {view === 'onboarding' && 'Guided SaaS Setup & Onboarding Funnel'}
             </h1>
             <span className="text-xs font-mono text-gray-400 bg-surface-card px-2 py-0.5 rounded border border-surface-border">
-              Node.js + WASM SQLite
+              {currentUser.role.toUpperCase()} SESSION
             </span>
           </div>
 
           <div className="flex items-center gap-3">
             <button
-              onClick={triggerWorkerSync}
+              onClick={() => triggerWorkerSync()}
               className="flex items-center gap-2 text-xs font-medium bg-surface-card hover:bg-surface-hover border border-surface-border px-3 py-2 rounded-lg text-gray-200 transition-all"
             >
               <RefreshCw className="h-3.5 w-3.5 text-kelu-500" />
@@ -568,6 +874,147 @@ export default function App() {
 
         {/* View Switcher Container */}
         <div className="flex-1 overflow-y-auto p-6">
+          {/* ==================== ONBOARDING TOUR VIEW ==================== */}
+          {view === 'onboarding' && (
+            <div className="max-w-4xl mx-auto space-y-6">
+              {/* Stepper Header */}
+              <div className="rounded-xl border border-surface-border bg-surface-card p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-lg font-bold text-white">SaaS Activation Onboarding</h2>
+                    <p className="text-xs text-gray-400 mt-1">
+                      Configure verified grounding sources, let the background worker index embeddings, and launch your helpdesk.
+                    </p>
+                  </div>
+                  <span className="text-xs font-mono font-bold px-3 py-1 rounded bg-kelu-500/20 text-kelu-100 border border-kelu-500/40">
+                    Step {onboardingStep} of 3
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div
+                    className={`p-3 rounded-lg border text-xs font-medium ${
+                      onboardingStep >= 1 ? 'border-kelu-500 bg-kelu-500/10 text-kelu-100' : 'border-surface-border text-gray-500'
+                    }`}
+                  >
+                    1. Ingest Knowledge Sources
+                  </div>
+                  <div
+                    className={`p-3 rounded-lg border text-xs font-medium ${
+                      onboardingStep >= 2 ? 'border-kelu-500 bg-kelu-500/10 text-kelu-100' : 'border-surface-border text-gray-500'
+                    }`}
+                  >
+                    2. Background Worker Sync
+                  </div>
+                  <div
+                    className={`p-3 rounded-lg border text-xs font-medium ${
+                      onboardingStep >= 3 ? 'border-kelu-500 bg-kelu-500/10 text-kelu-100' : 'border-surface-border text-gray-500'
+                    }`}
+                  >
+                    3. Launch Helpdesk & Ingress
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 1: Ingest */}
+              {onboardingStep === 1 && (
+                <div className="rounded-xl border border-surface-border bg-surface-card p-6 space-y-4">
+                  <h3 className="text-sm font-semibold text-white">Step 1: Connect Your Documentation or Support URL</h3>
+                  <p className="text-xs text-gray-400">
+                    TrustDesk operates strictly on verified company policies. Input your documentation sitemap or policy pack to begin.
+                  </p>
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-300 mb-1">Documentation URL</label>
+                      <input
+                        type="url"
+                        value={customCrawlUrl}
+                        onChange={(e) => setCustomCrawlUrl(e.target.value)}
+                        className="w-full bg-surface-base border border-surface-border rounded-lg px-4 py-2.5 text-xs text-white"
+                      />
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        triggerWorkerSync(`Crawl: ${customCrawlUrl}`);
+                        setOnboardingStep(2);
+                      }}
+                      className="bg-kelu-500 hover:bg-kelu-600 text-white font-semibold text-xs px-5 py-2.5 rounded-lg flex items-center gap-2 shadow-md shadow-kelu-500/20"
+                    >
+                      <span>Start Background Ingestion</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Sync Worker Telemetry */}
+              {onboardingStep === 2 && (
+                <div className="rounded-xl border border-surface-border bg-surface-card p-6 space-y-4">
+                  <h3 className="text-sm font-semibold text-white">Step 2: Non-Blocking Background Worker Processing</h3>
+                  <p className="text-xs text-gray-400">
+                    The background worker asynchronously parses HTML/PDF, runs heading-aware chunking, and populates the WASM vector store.
+                  </p>
+
+                  {activeJob && (
+                    <div className="space-y-4 bg-surface-base p-5 rounded-lg border border-surface-border">
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <span className="text-white font-bold">{activeJob.stage}</span>
+                        <span className="text-kelu-100 font-bold">{activeJob.progress_pct}%</span>
+                      </div>
+                      <div className="w-full bg-surface-card h-2.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-kelu-500 h-full transition-all duration-300 rounded-full"
+                          style={{ width: `${activeJob.progress_pct}%` }}
+                        />
+                      </div>
+                      <div className="bg-surface-sidebar p-3 rounded font-mono text-[11px] text-gray-400 max-h-32 overflow-y-auto space-y-1">
+                        {activeJob.logs?.map((l, i) => (
+                          <div key={i}>{l}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeJob && activeJob.status === 'completed' && (
+                    <button
+                      onClick={() => setOnboardingStep(3)}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-5 py-2.5 rounded-lg flex items-center gap-2 shadow-md shadow-emerald-600/20"
+                    >
+                      <span>Worker Complete • Proceed to Live Helpdesk</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Step 3: Launch */}
+              {onboardingStep === 3 && (
+                <div className="rounded-xl border border-surface-border bg-surface-card p-6 space-y-4 text-center">
+                  <div className="h-12 w-12 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 mx-auto flex items-center justify-center">
+                    <Check className="h-6 w-6" />
+                  </div>
+                  <h3 className="text-base font-bold text-white">Workspace Successfully Initialized</h3>
+                  <p className="text-xs text-gray-400 max-w-md mx-auto">
+                    Your knowledge base is indexed. External webhooks (Zendesk, Intercom) and the customer support widget are now active.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setView('helpdesk');
+                      showToast('Entered Helpdesk Queue');
+                    }}
+                    className="bg-kelu-500 hover:bg-kelu-600 text-white font-semibold text-xs px-6 py-3 rounded-lg shadow-lg shadow-kelu-500/25 inline-flex items-center gap-2"
+                  >
+                    <span>Open Live Helpdesk Queue</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ==================== 1. DASHBOARD VIEW ==================== */}
           {view === 'dashboard' && (
             <div className="space-y-6 max-w-7xl mx-auto">
@@ -928,7 +1375,6 @@ export default function App() {
           {/* ==================== 3. KNOWLEDGE BASES VIEW ==================== */}
           {view === 'knowledge' && (
             <div className="space-y-6 max-w-7xl mx-auto">
-              {/* Header card with action */}
               <div className="rounded-xl border border-surface-border bg-surface-card p-5 flex items-center justify-between">
                 <div>
                   <h2 className="text-base font-semibold text-white">Verified Knowledge Bases</h2>
@@ -937,7 +1383,7 @@ export default function App() {
                   </p>
                 </div>
                 <button
-                  onClick={triggerWorkerSync}
+                  onClick={() => triggerWorkerSync()}
                   className="flex items-center gap-2 text-xs font-semibold bg-kelu-500 hover:bg-kelu-600 text-white px-4 py-2.5 rounded-lg shadow-md shadow-kelu-500/20 transition-all"
                 >
                   <RefreshCw className="h-4 w-4" />
@@ -1313,6 +1759,87 @@ export default function App() {
           )}
         </div>
       </main>
+
+      {/* -------------------- FLOATING CUSTOMER SUPPORT WIDGET -------------------- */}
+      <div className="fixed bottom-6 right-6 z-40">
+        {!widgetOpen ? (
+          <button
+            onClick={() => setWidgetOpen(true)}
+            className="flex items-center gap-2.5 bg-kelu-500 hover:bg-kelu-600 text-white px-4 py-3 rounded-full shadow-2xl shadow-kelu-500/40 text-xs font-semibold transition-all hover:scale-105"
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span>Test Customer Widget</span>
+          </button>
+        ) : (
+          <div className="w-96 rounded-2xl border border-surface-border bg-surface-card shadow-2xl overflow-hidden flex flex-col h-[480px]">
+            {/* Widget Header */}
+            <div className="p-4 bg-kelu-500 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-7 w-7 rounded-lg bg-white/20 flex items-center justify-center font-bold text-xs">
+                  TD
+                </div>
+                <div>
+                  <div className="text-xs font-bold leading-tight">TrustDesk AI Assistant</div>
+                  <div className="text-[10px] text-white/80">Policy Grounded • Verified Citations</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setWidgetOpen(false)}
+                className="p-1 rounded-lg hover:bg-white/20 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Widget Conversation Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-surface-base">
+              {widgetMessages.map((m, i) => (
+                <div
+                  key={i}
+                  className={`flex flex-col ${m.sender === 'user' ? 'items-end' : 'items-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-xl px-3.5 py-2.5 text-xs leading-relaxed ${
+                      m.sender === 'user'
+                        ? 'bg-kelu-500 text-white'
+                        : 'bg-surface-card border border-surface-border text-gray-200'
+                    }`}
+                  >
+                    {m.text}
+                  </div>
+                  {m.citations && m.citations.length > 0 && (
+                    <div className="flex items-center gap-1 mt-1 text-[10px] font-mono text-gray-400">
+                      <span>Citing:</span>
+                      {m.citations.map((c) => (
+                        <span key={c} className="text-kelu-100 font-bold bg-surface-card px-1 py-0.5 rounded">
+                          [{c}]
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Widget Input Form */}
+            <form onSubmit={handleWidgetSend} className="p-3 border-t border-surface-border bg-surface-card flex gap-2">
+              <input
+                type="text"
+                value={widgetInput}
+                onChange={(e) => setWidgetInput(e.target.value)}
+                placeholder="Ask about return windows, warranties..."
+                className="flex-1 bg-surface-base border border-surface-border rounded-lg px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-kelu-500"
+              />
+              <button
+                type="submit"
+                className="bg-kelu-500 hover:bg-kelu-600 text-white p-2 rounded-lg transition-colors"
+              >
+                <Send className="h-3.5 w-3.5" />
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
