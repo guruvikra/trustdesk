@@ -15,7 +15,7 @@ class SearchIndex {
       const terms = tokenize(`${c.title} ${c.title} ${c.heading} ${c.heading} ${c.content}`);
       const tf = new Map();
       for (const t of terms) tf.set(t, (tf.get(t) || 0) + 1);
-      return { ...c, tf, len: terms.length };
+      return { ...c, tf, len: terms.length, titleTerms: new Set(tokenize(`${c.title} ${c.heading}`)) };
     });
     this.df = new Map();
     for (const c of this.chunks) for (const t of c.tf.keys()) this.df.set(t, (this.df.get(t) || 0) + 1);
@@ -59,6 +59,8 @@ class SearchIndex {
           if (s > best) { best = s; bestForm = f; }
         }
         if (best > 0) { score += best; matched.push(bestForm); }
+        // Distinctive query words in the page title/heading are strong evidence of the right page.
+        if (g.forms.some(f => c.titleTerms.has(f))) score += 1.5 * Math.min(1, this.df.has(g.base) ? this.idf(g.base) / 2 : 1);
       }
       if (score <= 0) continue;
       if (c.trust === 'quarantined') {
