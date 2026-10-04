@@ -73,7 +73,7 @@ function quote(source, hint) {
   return best ? best.sen : '';
 }
 
-function draft({ name, facts, flags, triage: tri, cite, plan, accountChange, policyCovered = true }) {
+function draft({ name, text, facts, flags, triage: tri, cite, plan, accountChange, policyCovered = true }) {
   const hi = `Hi ${name || 'there'},`;
   const item = facts.order && facts.order.items[0] ? facts.order.items[0].name : 'your item';
   const orderId = facts.order ? facts.order.order_id : null;
@@ -150,9 +150,19 @@ function draft({ name, facts, flags, triage: tri, cite, plan, accountChange, pol
     }
   } else {
     const src = cite.general;
-    if (src) lines.push(`Thanks for your message. ${quote(src, tri.rationale)} [${src.doc_id}]`);
-    lines.push('A member of our team will review your request and follow up.');
-    note = 'No specific policy matched with confidence; routed to a human.';
+    if (src && !tri.should_escalate) {
+      // Answer from the best-matching knowledge-base section (up to two relevant sentences).
+      const terms = queryTerms(text || '');
+      const best = splitSentences(src.content).map((sen, i) => ({ sen, i, score: terms.filter(t => sen.toLowerCase().includes(t)).length }))
+        .filter(x => x.score > 0).sort((a, b) => b.score - a.score).slice(0, 2).sort((a, b) => a.i - b.i);
+      lines.push(`Thanks for your question. ${best.length ? best.map(b => b.sen).join(' ') : quote(src, text)} [${src.doc_id}]`);
+      lines.push(`You can read more in "${src.title}" — ${src.heading}. If this doesn't solve it, just reply and a member of our team will help.`);
+      note = `Answered from the knowledge base (${src.doc_id}).`;
+    } else {
+      if (src) lines.push(`Thanks for your message. ${quote(src, text || tri.rationale)} [${src.doc_id}]`);
+      lines.push('A member of our team will review your request and follow up.');
+      note = 'No specific policy matched with confidence; routed to a human.';
+    }
   }
 
   if (plan.some(p => p.tool_name === 'escalate_to_human') && !/specialist|our team|team member|escalat/i.test(lines.join(' '))) {

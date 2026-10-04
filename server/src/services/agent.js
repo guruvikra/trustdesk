@@ -154,6 +154,14 @@ async function triage(ctx, { index = workspaceIndex(), provider, user, persist =
   const { output, meta } = await llm.triage({ text: ctx.text, facts: ctx.facts, flags: scan.flags, accountChange: scan.account_change_requested }, { provider });
   trace.step('model', { ...meta, output });
 
+  // A "general" question with no category keywords is only uncertain if the knowledge base doesn't
+  // cover it. When a document clearly answers it, treat it as answerable instead of escalating.
+  const kbTop = prelim.results[0];
+  if (!scan.flags.length && output.category === 'general' && output.should_escalate && kbTop && kbTop.coverage >= 0.6 && kbTop.matched_groups >= 2) {
+    output.should_escalate = false;
+    output.certainty = Math.max(output.certainty || 0, Math.min(1, kbTop.coverage));
+    output.rationale = `Answerable from the knowledge base (${kbTop.doc_id}, ${Math.round(kbTop.coverage * 100)}% of the question covered).`;
+  }
   const { triage: final, applied } = enforceTriage(output, { flags: scan.flags, accountChange: scan.account_change_requested, facts: ctx.facts });
   trace.step('policy_rules', { applied });
 

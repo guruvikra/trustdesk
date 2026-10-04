@@ -1,6 +1,6 @@
 # TrustDesk Evaluation Report
 
-Generated: 2026-10-04T12:25:08.267Z · Provider: `mock` · Dataset: `data/eval_cases.jsonl` (8 cases)
+Generated: 2026-10-04T17:21:02.886Z · Provider: `mock` · Dataset: `data/eval_cases.jsonl` (8 cases)
 
 ## Summary
 
