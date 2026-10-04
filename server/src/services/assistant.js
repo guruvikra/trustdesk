@@ -67,6 +67,7 @@ async function ask({ question, visibility = 'internal', ticketId = null, user = 
   });
   return finish({
     answered: true, answer: output.answer, citations, confidence: +Math.min(1, top.coverage).toFixed(2), quarantined: quarantined_doc_ids,
+    retrieved: results.map((r, i) => ({ n: i + 1, doc_id: r.doc_id, title: r.title, heading: r.heading, excerpt: r.content.slice(0, 500), score: r.score, coverage: r.coverage, visibility: r.visibility, cited: used.includes(i + 1) })),
     provider: meta.provider, model: meta.model, fallback_reason: meta.fallback_reason,
   });
 }

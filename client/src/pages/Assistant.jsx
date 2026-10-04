@@ -96,13 +96,18 @@ export default function Assistant() {
         <div className="card-h"><BookOpen size={16} className="muted" />Sources</div>
         <div className="chat-scroll">
           {!active ? <div className="muted small">Sources for the selected answer appear here.</div>
-            : active.citations && active.citations.length ? active.citations.map(c => (
-              <div key={c.n} className={`source ${hl === c.n ? 'hl' : ''}`}>
-                <div className="row"><span className="sup">{c.n}</span><button className="cite" onClick={() => setDoc(c.doc_id)}>{c.doc_id}</button><Badge>{c.visibility}</Badge></div>
-                <div className="small bold mt">{c.title} — {c.heading}</div>
-                <div className="small muted" style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>{c.excerpt}</div>
-              </div>
-            )) : (
+            : (active.retrieved && active.retrieved.length) || (active.citations && active.citations.length) ? (
+              <>
+                <div className="tiny muted">Retrieved {(active.retrieved || active.citations).length} chunks from the knowledge base{active.provider && active.provider !== 'mock' ? ` and sent them to ${active.provider}` : ''}:</div>
+                {(active.retrieved || active.citations).map(c => (
+                  <div key={c.n} className={`source ${hl === c.n ? 'hl' : ''}`} style={c.cited === false ? { opacity: 0.75 } : undefined}>
+                    <div className="row wrap"><span className="sup">{c.n}</span><button className="cite" onClick={() => setDoc(c.doc_id)}>{c.doc_id}</button>{c.cited !== false ? <Badge tone="green">used in answer</Badge> : <Badge tone="">context</Badge>}{c.score !== undefined && <span className="tiny faint">score {c.score} · {Math.round((c.coverage || 0) * 100)}%</span>}</div>
+                    <div className="small bold mt">{c.title} — {c.heading}</div>
+                    <div className="small muted" style={{ marginTop: 4, whiteSpace: 'pre-wrap' }}>{c.excerpt}</div>
+                  </div>
+                ))}
+              </>
+            ) : (
               <div className="small muted">
                 No sources used.
                 {active.suggestions && active.suggestions.length > 0 && <div className="mt">Closest documents: {active.suggestions.map(s => <button key={s.doc_id} className="cite" style={{ margin: 2 }} onClick={() => setDoc(s.doc_id)}>{s.doc_id}</button>)}</div>}

@@ -185,11 +185,15 @@ function answer({ question, sources }) {
   });
   picked.sort((a, b) => b.score - a.score);
   // Keep only sentences nearly as relevant as the best one, then present them in source order.
-  const best = picked.length ? picked[0].score : 0;
-  // Prefer the single best source; only borrow from others if it has fewer than two good sentences.
-  const strong = picked.filter(p => p.score >= best * 0.6);
-  const fromTop = strong.filter(p => p.n === 1);
-  const top = (fromTop.length >= 2 ? fromTop : strong).slice(0, 3).sort((a, b) => a.n - b.n || a.pos - b.pos);
+  // Use the retrieved chunks together: the two best sentences from the top chunk, plus the best
+  // sentence from each of the next chunks that matches the question at all.
+  const bySource = {};
+  for (const p of picked) (bySource[p.n] = bySource[p.n] || []).push(p);
+  const top = [];
+  Object.keys(bySource).map(Number).sort((a, b) => a - b).slice(0, 3).forEach((n, i) => {
+    top.push(...bySource[n].slice(0, i === 0 ? 2 : 1));
+  });
+  top.sort((a, b) => a.n - b.n || a.pos - b.pos);
   if (!top.length) return { answer: '', used_sources: [], answerable: false };
   return {
     answer: top.map(p => `${p.sen} [${p.n}]`).join(' '),
