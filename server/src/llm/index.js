@@ -16,7 +16,7 @@ function config() {
   const requested = (process.env.LLM_PROVIDER || '').toLowerCase();
   const hasGemini = Boolean(process.env.GEMINI_API_KEY);
   const provider = requested === 'mock' ? 'mock' : (requested === 'gemini' || (!requested && hasGemini)) && hasGemini ? 'gemini' : 'mock';
-  return { provider, model: provider === 'gemini' ? process.env.GEMINI_MODEL || 'gemini-2.5-flash' : mock.model, prompt_version: PROMPT_VERSION };
+  return { provider, model: provider === 'gemini' ? process.env.GEMINI_MODEL || 'gemini-3.8-flash' : mock.model, prompt_version: PROMPT_VERSION };
 }
 
 function resolve(override) {
