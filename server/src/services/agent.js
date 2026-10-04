@@ -34,6 +34,14 @@ const TOPIC_ANCHORS = {
   security: /injection|untrusted|instruction|prompt/i,
   coupon: /coupon|goodwill/i,
 };
+// A chunk governs a topic if its title/heading names it, or its text discusses it repeatedly
+// (a passing mention such as a list of categories in an unrelated document does not count).
+function isAbout(chunk, anchor) {
+  if (anchor.test(`${chunk.title} ${chunk.heading}`)) return true;
+  const g = new RegExp(anchor.source, 'gi');
+  return (chunk.content.match(g) || []).length >= 3;
+}
+
 const CATEGORY_TOPIC = { refund: 'refund', shipping: 'shipping', warranty: 'warranty', billing: 'billing', account_security: 'account' };
 
 // --- Context -------------------------------------------------------------
@@ -103,7 +111,7 @@ function retrieveForTicket(ctx, { index, category, flags, accountChange }) {
   for (const key of topicKeys) {
     if (!TOPICS[key]) continue;
     const top = index.search(TOPICS[key] + ' ' + ctx.text, { limit: 1 }).results[0];
-    if (top && TOPIC_ANCHORS[key].test(`${top.title} ${top.heading} ${top.content}`)) {
+    if (top && isAbout(top, TOPIC_ANCHORS[key])) {
       cite[key] = top;
       if (!sources.some(s => s.chunk_id === top.chunk_id)) sources.push(top);
     }
@@ -261,6 +269,8 @@ async function draft(ctx, { index = workspaceIndex(), provider, user, persist = 
   }
 
   const unsafe = flags.some(f => UNSAFE_FLAGS.includes(f));
+  const { confidence, components } = answerConfidence({ index, ctx, tri, cite, topicKey, sources, policyCovered, checked, unsafe });
+  trace.step('confidence', { confidence, components });
   const finalStatus = unsafe ? 'refused_and_escalated' : tri.should_escalate || !policyCovered ? 'escalated'
     : checked.issues.some(i => i.type === 'uncited') ? 'needs_human_review' : 'draft_ready';
 
@@ -269,7 +279,7 @@ async function draft(ctx, { index = workspaceIndex(), provider, user, persist = 
     retrieved_doc_ids: allowedDocIds, quarantined_doc_ids: quarantined,
     recommended_actions: plan.map(p => p.tool_name), blocked_actions: blocked,
     guardrails: { flags, output_issues: checked.issues, fallback_reason: meta.fallback_reason },
-    output: { reply: checked.reply, citations: checked.citations, internal_note: output.internal_note },
+    output: { reply: checked.reply, citations: checked.citations, internal_note: output.internal_note, confidence, confidence_components: components, policy_covered: policyCovered },
     final_status: finalStatus, created_by: user && user.email,
   }, persist);
 
@@ -306,7 +316,30 @@ async function draft(ctx, { index = workspaceIndex(), provider, user, persist = 
     internal_note: output.internal_note, recommended_actions: plan, proposed_actions: proposed, blocked_actions: blocked,
     guardrails: { flags, output_issues: checked.issues, quarantined_doc_ids: quarantined },
     final_status: finalStatus, provider: meta.provider, model: meta.model, fallback_reason: meta.fallback_reason, trace: run,
+    confidence, confidence_components: components, policy_covered: policyCovered,
   };
+}
+
+// Transparent answer-confidence heuristic used by Autopilot's threshold:
+//   policy (0.35)        the governing policy document exists and is cited in the reply
+//   retrieval (0.35)     how much of the ticket's wording that document covers (full marks at 50%)
+//   classification (0.2) how decisive triage was
+//   grounding (0.1)      the reply passed output guardrails with at least one valid citation
+// Capped at 0.97. Unsafe input forces 0; escalations are capped at 0.5 so they are never auto-sent.
+function answerConfidence({ index, ctx, tri, cite, topicKey, sources, policyCovered, checked, unsafe }) {
+  const governing = (topicKey && cite[topicKey]) || cite.general || sources[0];
+  const coverage = governing ? index.coverage(ctx.text, governing.chunk_id) : 0;
+  const components = {
+    policy: policyCovered && governing && checked.citations.includes(governing.doc_id) ? 0.35 : 0,
+    retrieval: +(0.35 * Math.min(1, coverage / 0.5)).toFixed(3),
+    classification: +(0.2 * (Number.isFinite(tri.certainty) ? tri.certainty : 0.7)).toFixed(3),
+    grounding: checked.citations.length && !checked.issues.length ? 0.1 : 0,
+  };
+  // A heuristic is never certain: cap at 97%, so a 98–100% threshold means "never auto-send".
+  let confidence = Math.min(0.97, Object.values(components).reduce((a, b) => a + b, 0));
+  if (unsafe) confidence = 0;
+  else if (tri.should_escalate || !policyCovered) confidence = Math.min(confidence, 0.5);
+  return { confidence: +confidence.toFixed(2), components: { ...components, governing_doc: governing ? governing.doc_id : null, governing_coverage: coverage } };
 }
 
 function formatRun(r) {

@@ -3,7 +3,7 @@ import {
   MessageCircleQuestion, CheckCircle2, Inbox, Gavel, MessageSquare, Send, HelpCircle, TrendingUp, ShieldAlert, BookOpen, ThumbsUp, ThumbsDown,
 } from 'lucide-react';
 import { api } from '../api';
-import { Badge, Card, Empty, Spinner, fmtTime, pct } from '../components/ui';
+import { Badge, Card, Empty, Spinner, fmtTime, pct, useToast } from '../components/ui';
 import Onboarding from '../components/Onboarding';
 import { go } from '../App';
 
@@ -78,14 +78,15 @@ function Funnel({ steps }) {
 
 const STATUS_BADGE = { answered: ['answered', 'green'], no_answer: ['not in KB', 'amber'], refused: ['refused', 'red'] };
 
-export default function Dashboard({ user }) {
+export default function Dashboard({ user, org }) {
+  const toast = useToast();
   const [days, setDays] = useState(14);
   const [a, setA] = useState(null);
   const [stats, setStats] = useState(null);
   const [filter, setFilter] = useState('all');
   const load = () => {
-    api(`/api/analytics?days=${days}`).then(setA);
-    api('/api/stats').then(setStats);
+    api(`/api/analytics?days=${days}`).then(setA).catch(e => toast(e.message, 'error'));
+    api('/api/stats').then(setStats).catch(e => toast(e.message, 'error'));
   };
   useEffect(() => { load(); }, [days]);
 
@@ -95,7 +96,7 @@ export default function Dashboard({ user }) {
 
   return (
     <div className="stack">
-      <Onboarding stats={stats} user={user} onChanged={load} />
+      <Onboarding stats={stats} user={user} org={org} onChanged={load} />
 
       <div className="row">
         <div className="small muted">Showing the last {days} days</div>
@@ -114,15 +115,16 @@ export default function Dashboard({ user }) {
         <Card title="Questions per day" icon={TrendingUp}>
           {t.questions === 0 ? <Empty icon={MessageCircleQuestion} title="No questions yet">Ask the Internal Assistant or try the support widget — every question shows up here.</Empty> : <QuestionsChart data={a.questions_per_day} />}
         </Card>
-        <Card title="Widget deflection" icon={MessageSquare}>
+        <Card title="Deflection & automation" icon={MessageSquare}>
           <Funnel steps={[
-            { label: 'Customer questions', value: a.deflection.asked },
+            { label: 'Customer questions (form + widget)', value: a.deflection.asked },
             { label: 'Answered instantly', value: a.deflection.answered, rate: a.deflection.asked ? a.deflection.answered / a.deflection.asked : null },
             { label: 'Resolved without a ticket', value: a.deflection.deflected, rate: a.deflection.asked ? a.deflection.deflected / a.deflection.asked : null },
             { label: 'Handed off as tickets', value: a.deflection.tickets, rate: a.deflection.asked ? a.deflection.tickets / a.deflection.asked : null },
           ]} />
           <div className="hr" />
           <div className="row small"><Send size={14} className="muted" />AI drafts sent<span className="spacer" /><b>{a.drafts.sent}</b><span className="muted tiny">of {a.drafts.total}</span></div>
+          <div className="row small mt" style={{ cursor: 'pointer' }} onClick={() => go('automation')}><CheckCircle2 size={14} className="muted" />Answered by Autopilot<span className="spacer" /><b>{(a.autopilot && a.autopilot.auto_replied) || 0}</b><span className="muted tiny">{(a.autopilot && a.autopilot.drafted) || 0} drafted</span></div>
           <div className="row small mt"><ShieldAlert size={14} className="muted" />Guardrail events<span className="spacer" /><b>{stats.guardrail_events}</b></div>
           <div className="row small mt"><ThumbsUp size={14} className="muted" />Answer feedback<span className="spacer" /><span className="row" style={{ gap: 10 }}><span className="row" style={{ gap: 4 }}><ThumbsUp size={13} color="var(--green)" /><b>{t.thumbs_up}</b></span><span className="row" style={{ gap: 4 }}><ThumbsDown size={13} color="var(--red)" /><b>{t.thumbs_down}</b></span></span></div>
         </Card>

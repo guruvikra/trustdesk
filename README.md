@@ -8,6 +8,8 @@ TrustDesk helps a support team answer customers quickly **without letting the AI
 |---|---|
 | **Knowledge Base** | Upload PDFs / Markdown / text / HTML, import a web page, or paste text. Documents are chunked by heading and indexed (BM25). Documents containing instructions aimed at the AI are **quarantined automatically**. Each document is *public* (customer widget may use it) or *internal* (team only). |
 | **Internal Assistant** | Team Q&A over the knowledge base with numbered citations. Refuses requests for prompts/secrets, and says **"not in the knowledge base"** instead of guessing when confidence is low. Thumbs up/down feedback is stored on the trace. |
+| **Autopilot** | What happens when a ticket arrives (webhook, import, support form, widget, manual): **triage only**, **draft for review**, or **auto-reply when confident** above a threshold you set. Auto-send is refused in code whenever guardrails fire, a specialist is needed, no policy covers the topic, the reply lacks a valid citation, or any action is proposed. Every decision is logged with its reason. |
+| **Support form deflector** | A hosted contact form (`/support.html?key=<public key>`, embeddable as an iframe) that suggests a sourced answer while the customer types; if they still submit, the ticket goes through Autopilot and an automatic answer appears on the confirmation page. |
 | **Dashboard** | Questions asked per day (team assistant vs customer widget), answer rate, top questions, knowledge gaps, a filterable question log, widget deflection funnel, drafts, guardrail events and eval quality. |
 | **Helpdesk** | Tickets from **Zendesk, Freshdesk, Intercom and Front** (import + reply back + resolve), **Linear** for escalating defects to engineering, webhooks, the embeddable support widget, or a manual form. AI triage → grounded draft with `[KB-…]` citations → **approval-gated actions with idempotency keys** → human sends. Every AI run stores a step-by-step trace. |
 
@@ -50,7 +52,7 @@ Without a key, TrustDesk uses its **offline policy engine** (deterministic). If 
 ### Other commands
 
 ```bash
-npm test                     # 55 automated tests (in-memory DB, mock model)
+npm test                     # 70 automated tests (in-memory DB, mock model)
 npm run eval                 # run data/eval_cases.jsonl → reports/EVAL_REPORT.md (uses Gemini if configured)
 npm run eval -- --mock       # same with the offline engine (deterministic)
 npm run eval:heldout         # 10 extra tickets written after tuning (generalisation check)
@@ -131,6 +133,23 @@ flowchart LR
 7. **Output guardrails** (`checkOutput`) remove citations that were not in the trusted retrieved set, block "your refund has been processed"-style promises and secret-looking strings, and redact card numbers and other customers' emails.
 8. **Persistence**: draft (editable), action proposals (pending approval), and a trace with every step.
 
+### Autopilot and answer confidence (`server/src/services/automation.js`)
+
+Every new ticket runs the workspace's Autopilot in the background (`setImmediate`, so the request that created the ticket is never blocked). `POST /api/tickets/:id/autopilot` runs it on demand.
+
+The draft's **answer confidence** (shown on drafts and in traces) is a transparent heuristic, capped at 97%:
+
+| Component | Weight | Meaning |
+|---|---|---|
+| policy | 0.35 | the governing policy document exists (title/heading or repeated discussion of the topic) and is cited |
+| retrieval | 0.35 | IDF-weighted share of the ticket's wording that document covers (full marks at 50%) |
+| classification | 0.20 | how decisive triage was |
+| grounding | 0.10 | the reply passed output guardrails with ≥1 valid citation |
+
+Unsafe input forces 0 and escalations are capped at 0.5. In auto mode the reply is sent only if confidence ≥ threshold **and** none of the safety blockers apply; otherwise the draft waits with the reasons listed. With auto-escalate on, safety/security tickets are routed to specialists automatically (the `escalate_to_human` tool needs no approval).
+
+On the seed data at a 75% threshold: tkt_9003 (final-sale software refund) is answered automatically; tkt_9001/9002/9008 are held because they propose actions; tkt_9004–9007 are escalated.
+
 ### Approval-gated actions with idempotency (`server/src/services/actions.js`)
 
 - `create_replacement_order` and `start_refund_review` (and `issue_coupon`, `lock_account`) **require human approval**: `pending_approval → approved (manager) → executed`. Executing before approval returns **409**; agents approving returns **403**.
@@ -152,7 +171,8 @@ flowchart LR
 | **Model adapter with fallback** | `server/src/llm/index.js` is the only entry point; tests force the mock; Gemini failures degrade gracefully and are visible in traces. Prompt version is recorded on every run. |
 | **Background work** | Knowledge ingestion, auto-triage of new tickets and eval runs execute after the response is sent (`setImmediate` jobs with status endpoints), so long work does not block other requests. |
 | **Database per tenant** | Each organisation's support data lives in its own SQLite file, selected per request via `AsyncLocalStorage`, so no query can read another tenant's rows; services needed no tenant filters. Background jobs inherit the request's tenant. |
-| **Auth** | Email + password (scrypt), random session tokens, role checks on approvals, team, integrations, document management and reset. |
+| **Public requesters are unverified** | Anyone can type any email into the widget or support form, so those tickets are not linked to customer records or orders (no account data reaches the AI or the reply). The agent sees "email not verified — matches customer X". |
+| **Auth** | Email + password (scrypt), random session tokens (30-day expiry), role checks on approvals, team, integrations, document management and reset. |
 
 ---
 
@@ -235,6 +255,11 @@ Public endpoints (widget, webhooks) select the workspace with `X-Workspace-Key: 
 | `POST /api/integrations/:platform/oauth/start` | returns the app's authorize URL (manager/admin) |
 | `GET /api/oauth/:platform/callback` *(public)* | OAuth redirect target; stores the token in the workspace |
 | `POST /api/tickets/:id/linear-issue` | create (once) a Linear issue with ticket context |
+| `GET /api/automation/settings` / `PUT` | Autopilot mode, threshold (0.5–1), auto-escalate (PUT: manager/admin) |
+| `GET /api/automation/events` | Autopilot activity log + outcome counts |
+| `POST /api/tickets/:id/autopilot` | run Autopilot on a ticket now |
+| `GET /api/public/workspace` *(public)* | workspace name for the hosted form |
+| `GET /api/public/tickets/:id?email=` *(public)* | customer checks their own ticket status and latest reply |
 | `GET /api/analytics?days=14` | dashboard data: questions per day, top/unanswered questions, question log, deflection, drafts |
 | `POST /api/webhooks/:platform` *(public)* | `zendesk`, `freshdesk`, `intercom`, `front`, `generic`; duplicate deliveries are ignored |
 | `POST /api/eval-runs` | **202** `{eval_run_id}`; `{provider:"mock"}` forces the offline engine |
@@ -277,12 +302,14 @@ Adversarial cases:
 
 ## Tests
 
-`npm test` runs 55 tests (`server/tests/`, Node's built-in test runner, in-memory DB, mock model):
+`npm test` runs 70 tests (`server/tests/`, Node's built-in test runner, in-memory DB, mock model):
 
 - **Guardrails**: injection, exfiltration, identity bypass, safety detection; quarantine of `KB-ADVERSARIAL-001` but not `KB-SECURITY-001`; citation stripping; refund-promise blocking; PII redaction.
 - **Data**: exact doc IDs, no `expected_` keys in API responses or the tickets table, date windows from `created_at`.
 - **Actions**: 409 before approval, 403 for agents, single execution with exactly one replacement order, idempotent replays, 409 on key reuse with a different payload, blocked coupons.
 - **Adversarial drafts** for tkt_9005/9006/9007 with complete traces.
+- **Autopilot**: settings validation and roles, auto-reply of a safe confident ticket, holds for approval-gated actions, refusal + auto-escalation of adversarial tickets, threshold holds, triage-only mode, support-form hand-off with customer-visible reply.
+- **Hardening**: SSRF protection on URL import, binary-file rejection, doc-ID normalisation, empty drafts, no rejecting sent drafts, send-without-connection, idempotent public form, unverified public requesters, no spoofed manual tickets, no `?token=` auth, OAuth not breaking API-key connections.
 - **Connectors** (stubbed third-party APIs): Intercom import/reply/close, Front import/reply-as-teammate/archive, Linear issue creation (idempotent), OAuth authorize URL + callback + single-use state, secrets never returned.
 - **SaaS**: sign-up validation, isolated workspaces (no cross-tenant reads), workspace-key routing for widget/webhooks, team invites, role rules, removal and logout.
 - **Evals** (direct and async API), **knowledge** ingestion (JSON, multipart, quarantine), **assistant** answer/refusal/unknown, **webhooks** (dedupe, customer linking), **widget** hand-off, **empty-workspace** reset.
@@ -324,5 +351,7 @@ reports/                      generated evaluation reports
 - Helpdesk import pulls the latest 20–25 open conversations on demand (no scheduled polling); webhooks need a public URL. OAuth tokens are stored without refresh handling (re-connect if a provider expires them).
 - Connector request shapes are covered by tests against stubbed APIs and were checked against the live APIs for authentication errors, but full flows need your own Zendesk/Freshdesk/Intercom/Front/Linear accounts to verify end to end.
 - No email delivery: invited teammates get a temporary password shown once to the inviter; no password reset flow.
-- The demo workspace keeps fixed demo session tokens (used by tests).
+- The demo workspace keeps fixed demo session tokens (used by tests); anyone with them can change the demo workspace. No rate limiting on login/sign-up. Webhooks are authorised by the workspace public key (plus the optional global `WEBHOOK_SECRET`), not a per-workspace secret.
+- There is no outbound email: replies to manual/widget/form tickets are recorded in TrustDesk (and shown to the customer on the support-form status page); replies to imported helpdesk tickets are posted back to that helpdesk.
+- `npm run reset` refuses to run while the server is up (the server would overwrite it); use Settings → Model & data in the app instead.
 - sql.js writes the whole database file after each write, which is fine for a single-team demo but not for high write volume (swap in Postgres behind `db.js` for production).

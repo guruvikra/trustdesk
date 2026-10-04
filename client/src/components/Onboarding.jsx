@@ -5,18 +5,18 @@ import { Button, useToast } from './ui';
 import { go } from '../App';
 
 // Getting-started checklist shown on the Dashboard until every step is done.
-export default function Onboarding({ stats, user, onChanged }) {
+export default function Onboarding({ stats, user, org, onChanged }) {
   const toast = useToast();
   const [ws, setWs] = useState(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => { api('/api/workspace').then(setWs).catch(() => {}); }, [stats]);
-  if (!ws) return null;
+  if (!ws || (org && org.is_demo)) return null;
 
   const steps = [
     { icon: BookOpen, title: 'Add knowledge', text: 'Upload a policy PDF, doc or help-centre page.', done: stats.documents.total > 0, page: 'knowledge' },
     { icon: Sparkles, title: 'Ask the assistant', text: 'Get a cited answer from your documents.', done: stats.assistant.questions > 0, page: 'assistant' },
     { icon: Plug, title: 'Bring in tickets', text: 'Connect Zendesk or Freshdesk, or create a ticket.', done: ws.integrations_connected.length > 0 || stats.tickets.total > 0, page: 'integrations' },
-    { icon: MessageSquare, title: 'Try the widget', text: 'Answer a customer question before a ticket exists.', done: stats.widget.questions > 0, page: 'widget' },
+    { icon: MessageSquare, title: 'Try the support form', text: 'See a customer question answered before a ticket exists.', done: stats.widget.questions > 0, page: 'support-form' },
     { icon: Users, title: 'Invite your team', text: 'Add an agent and a manager for approvals.', done: ws.team_size > 1, page: 'settings' },
   ];
   const doneCount = steps.filter(s => s.done).length;

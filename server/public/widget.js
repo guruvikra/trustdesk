@@ -32,8 +32,16 @@
       var no = document.createElement('button'); no.className = 'tdw-x'; no.textContent = 'Contact support';
       yes.onclick = function () { post('/api/public/deflections/' + r.event_id + '/outcome', { resolved: true }); row.remove(); add('tdw-a tdw-s', 'Great — glad it helped!'); };
       no.onclick = function () {
-        row.remove(); var email = window.prompt('Your email so our team can reply:'); if (!email) return;
-        post('/api/public/deflections/' + r.event_id + '/outcome', { resolved: false, email: email }).then(function (o) { add('tdw-a tdw-s', o.ticket_id ? 'Ticket ' + o.ticket_id + ' created. We will email you.' : (o.detail || 'Could not create ticket')); });
+        row.remove();
+        var box = document.createElement('form'); box.className = 'tdw-row';
+        box.innerHTML = '<input type="email" required placeholder="Your email so we can reply" style="flex:1;padding:6px 8px;border:1px solid #d5d9e4;border-radius:8px;font:inherit" /><button class="tdw-x" type="submit">Send</button>';
+        a.appendChild(box); box.querySelector('input').focus();
+        box.onsubmit = function (ev) {
+          ev.preventDefault();
+          var email = box.querySelector('input').value.trim(); if (!email) return;
+          box.remove();
+          post('/api/public/deflections/' + r.event_id + '/outcome', { resolved: false, email: email }).then(function (o) { add('tdw-a tdw-s', o.ticket_id ? 'Ticket ' + o.ticket_id + ' created — our team will follow up at ' + email + '.' : (o.detail || 'Could not create ticket')); });
+        };
       };
       if (r.answered) row.appendChild(yes); row.appendChild(no); a.appendChild(row);
     }).catch(function () { wait.textContent = 'Network error — please try again.'; });

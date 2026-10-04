@@ -9,7 +9,7 @@ other out off now here hi hello times thanks thank dear team support help need w
 
 // Light domain synonym expansion so customer wording matches policy wording.
 const SYNONYMS = {
-  charged: ['charge', 'duplicate'], twice: ['duplicate'], double: ['duplicate'], charges: ['charge', 'duplicate'],
+  charged: ['charge', 'duplicate'], twice: ['duplicate'], two: ['duplicate', 'double'], double: ['duplicate'], charges: ['charge', 'duplicate'],
   broken: ['damaged', 'defective'], cracked: ['damaged'], shattered: ['damaged'], faulty: ['defective'],
   stuck: ['movement', 'stale'], moved: ['movement'], parcel: ['package'], courier: ['carrier'],
   swollen: ['swelling', 'battery', 'safety'], swelling: ['battery', 'safety'], bulging: ['swelling', 'safety'],
@@ -58,11 +58,16 @@ function queryTerms(text) {
   return [...out];
 }
 
+// Conversational filler that says nothing about the topic; ignored when measuring coverage only.
+const FILLER = new Set(`bought buy buying purchased purchase last week weeks month months year years today yesterday tomorrow ago since
+changed change mind supposed get getting got want wanted wants would could should like know tell told said really much many lot thing
+things something someone anyone everything kindly sir madam asap quickly soon possible way time still already ok okay`.split(/\s+/).filter(Boolean));
+
 // One group per distinct query word: its stem plus synonym stems (used for coverage scoring).
 function queryGroups(text) {
   const groups = new Map();
   for (const w of rawWords(text)) {
-    if (w.length <= 1 || STOPWORDS.has(w)) continue;
+    if (w.length <= 1 || STOPWORDS.has(w) || FILLER.has(w)) continue;
     const base = stem(w);
     if (!groups.has(base)) groups.set(base, new Set([base]));
     for (const syn of synonymsOf(w)) groups.get(base).add(stem(syn));

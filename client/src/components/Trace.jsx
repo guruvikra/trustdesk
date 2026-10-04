@@ -12,6 +12,7 @@ const STEP_LABELS = {
   guardrail_output: 'Output guardrails',
   model_suggestion_ignored: 'Model suggestion ignored',
   policy_coverage: 'Policy coverage',
+  confidence: 'Answer confidence',
 };
 
 function stepSummary(s) {
@@ -25,6 +26,7 @@ function stepSummary(s) {
     case 'guardrail_output': return s.issues && s.issues.length ? s.issues.map(i => i.type).join(', ') : `Clean · citations ${(s.citations || []).join(', ')}`;
     case 'model_suggestion_ignored': return `${s.suggested_action}: ${s.reason}`;
     case 'policy_coverage': return s.detail;
+    case 'confidence': return `${Math.round(s.confidence * 100)}% = policy ${s.components.policy} + retrieval ${s.components.retrieval} + classification ${s.components.classification} + grounding ${s.components.grounding} (governing ${s.components.governing_doc || 'none'}, covers ${Math.round((s.components.governing_coverage || 0) * 100)}% of the ticket)`;
     default: return '';
   }
 }

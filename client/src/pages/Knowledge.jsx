@@ -68,8 +68,8 @@ function AddSource({ onIngested }) {
       )}
       <div className="row mt">
         <select className="select" style={{ width: 230 }} value={visibility} onChange={e => setVisibility(e.target.value)}>
-          <option value="public">Public — widget, assistant, helpdesk</option>
-          <option value="internal">Internal — team only, never in widget</option>
+          <option value="public">Public — customers may see answers from it</option>
+          <option value="internal">Internal — team only (assistant & helpdesk)</option>
         </select>
         <span className="spacer" />
         <Button variant="primary" icon={Upload} busy={busy} disabled={!ready} onClick={submit}>Ingest</Button>
@@ -118,7 +118,7 @@ function Playground() {
   );
 }
 
-export default function Knowledge({ user }) {
+export default function Knowledge({ user, org, docId }) {
   const toast = useToast();
   const [docs, setDocs] = useState(null);
   const [jobs, setJobs] = useState([]);
@@ -126,10 +126,11 @@ export default function Knowledge({ user }) {
   const isManager = ['support_manager', 'admin'].includes(user.role);
 
   const load = useCallback(() => {
-    api('/api/documents').then(setDocs);
-    api('/api/ingest-jobs').then(setJobs);
+    api('/api/documents').then(setDocs).catch(e => { setDocs([]); toast(e.message, 'error'); });
+    api('/api/ingest-jobs').then(setJobs).catch(() => setJobs([]));
   }, []);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (docId) setOpen(docId); }, [docId]);
 
   const patch = async (d, body) => {
     try { await api(`/api/documents/${d.doc_id}`, { method: 'PATCH', body }); load(); } catch (e) { toast(e.message, 'error'); }
@@ -163,7 +164,7 @@ export default function Knowledge({ user }) {
         <Playground />
       </div>
 
-      <Card title="Sources" icon={BookOpen} bodyClass="" actions={<Button size="sm" icon={RefreshCw} onClick={resync}>Re-sync policy pack</Button>}>
+      <Card title="Sources" icon={BookOpen} bodyClass="" actions={org && org.is_demo && isManager && <Button size="sm" icon={RefreshCw} onClick={resync}>Re-sync sample policies</Button>}>
         {docs === null ? <div className="card-b"><Spinner /></div> : docs.length === 0 ? <Empty icon={BookOpen} title="Knowledge base is empty">Upload your policies, help-center pages or runbooks above.</Empty> : (
           <table className="table">
             <thead><tr><th>Doc ID</th><th>Title</th><th>Source</th><th>Visibility</th><th>Trust</th><th>Chunks</th><th>Updated</th><th /></tr></thead>

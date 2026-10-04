@@ -27,11 +27,13 @@ async function request(label, url, { method = 'GET', headers = {}, body, form } 
   let res;
   try {
     res = await fetch(url, {
+      signal: AbortSignal.timeout(15000),
       method,
       headers: { Accept: 'application/json', ...(form ? { 'Content-Type': 'application/x-www-form-urlencoded' } : body ? { 'Content-Type': 'application/json' } : {}), ...headers },
       body: form ? new URLSearchParams(form).toString() : body ? JSON.stringify(body) : undefined,
     });
   } catch (e) {
+    if (e.name === 'TimeoutError') throw err(504, `${label} did not respond within 15 seconds — try again.`);
     throw err(502, `Could not reach ${label} (${e.cause && e.cause.code ? e.cause.code : e.message}) — check the subdomain/domain.`);
   }
   const text = await res.text();
@@ -309,7 +311,9 @@ function saveIntegration(platform, input) {
   const missing = def.fields[mode].filter(f => !f.optional && !config[f.key]).map(f => f.label);
   if (missing.length) throw err(400, `Missing: ${missing.join(', ')}`);
   if (mode === 'oauth') {
-    writeConfig(platform, config, Boolean(current && current.enabled && config.access_token));
+    // Store the pre-OAuth fields only; a working connection keeps its auth mode until OAuth completes.
+    if (current && current.enabled) config.auth_mode = current.config.auth_mode;
+    writeConfig(platform, config, Boolean(current && current.enabled));
   } else {
     writeConfig(platform, config, true);
   }
@@ -359,14 +363,25 @@ async function syncIntegration(platform) {
 }
 
 // Used when an agent sends a reply on a ticket imported from a helpdesk.
+// If the source app is not connected (e.g. a webhook-tester ticket), the reply is kept in TrustDesk only.
 async function pushReply(ticket, body, opts) {
   if (!HELPDESKS.includes(ticket.channel) || !ticket.source_ref) return null;
-  const { def, config } = requireEnabled(ticket.channel);
-  return def.postReply(config, ticket.source_ref, body, opts);
+  const row = getIntegration(ticket.channel);
+  if (!row || !row.enabled) return `Saved in TrustDesk only — ${PLATFORMS[ticket.channel].label} is not connected, so nothing was posted there.`;
+  return PLATFORMS[ticket.channel].postReply(row.config, ticket.source_ref, body, opts);
 }
 
-// Creates (once) a Linear issue for a ticket.
-async function createLinearIssue(ticketView, user) {
+function isConnected(platform) { const row = getIntegration(platform); return Boolean(row && row.enabled); }
+
+// Creates (once) a Linear issue for a ticket. Concurrent clicks share one in-flight request.
+const linearInFlight = new Map();
+function createLinearIssue(ticketView, user) {
+  const key = `${require('../db').currentOrgId()}:${ticketView.ticket_id}`;
+  if (!linearInFlight.has(key)) linearInFlight.set(key, createLinearIssueOnce(ticketView, user).finally(() => linearInFlight.delete(key)));
+  return linearInFlight.get(key);
+}
+
+async function createLinearIssueOnce(ticketView, user) {
   const existing = db.get("SELECT * FROM external_links WHERE ticket_id = ? AND platform = 'linear'", [ticketView.ticket_id]);
   if (existing) return { identifier: existing.external_id, url: existing.url, replayed: true };
   const { def, config } = requireEnabled('linear');
@@ -457,6 +472,6 @@ function normalizeWebhook(platform, p) {
 }
 
 module.exports = {
-  listIntegrations, saveIntegration, disableIntegration, testIntegration, syncIntegration, pushReply, normalizeWebhook,
+  isConnected, listIntegrations, saveIntegration, disableIntegration, testIntegration, syncIntegration, pushReply, normalizeWebhook,
   createLinearIssue, externalLinks, startOAuth, consumeState, finishOAuth, PLATFORMS, HELPDESKS,
 };

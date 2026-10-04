@@ -10,7 +10,7 @@ export default function Approvals({ user }) {
   const [items, setItems] = useState(null);
   const [busy, setBusy] = useState('');
   const isManager = ['support_manager', 'admin'].includes(user.role);
-  const load = () => api(`/api/tool-actions${status ? `?status=${status}` : ''}`).then(setItems);
+  const load = () => api(`/api/tool-actions${status ? `?status=${status}` : ''}`).then(setItems).catch(e => { setItems([]); toast(e.message, 'error'); });
   useEffect(() => { load(); }, [status]);
 
   const decide = async (a, decision) => {

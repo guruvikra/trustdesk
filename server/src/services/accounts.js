@@ -60,9 +60,12 @@ async function init() {
       [DEMO_ORG_ID, 'BlueGadgets (demo)', 'pk_demo', 'demo', new Date().toISOString()]);
   }
   for (const a of DEMO_ACCOUNTS) {
-    if (!store.get('SELECT user_id FROM accounts WHERE user_id = ?', [a.user_id])) {
+    const existing = store.get('SELECT password_hash FROM accounts WHERE user_id = ?', [a.user_id]);
+    if (!existing) {
       store.run('INSERT INTO accounts (user_id, org_id, name, email, password_hash, role, created_at) VALUES (?,?,?,?,?,?,?)',
         [a.user_id, DEMO_ORG_ID, a.name, a.email, hashPassword(DEMO_PASSWORD()), a.role, new Date().toISOString()]);
+    } else if (!verifyPassword(DEMO_PASSWORD(), existing.password_hash)) {
+      store.run('UPDATE accounts SET password_hash = ? WHERE user_id = ?', [hashPassword(DEMO_PASSWORD()), a.user_id]);
     }
     store.run('INSERT OR IGNORE INTO sessions (token, user_id, created_at) VALUES (?,?,?)', [a.token, a.user_id, new Date().toISOString()]);
   }
@@ -108,9 +111,16 @@ function login({ email, password }) {
 
 function logout(token) { store.run('DELETE FROM sessions WHERE token = ?', [token]); }
 
+const SESSION_DAYS = 30;
+
 function sessionUser(token) {
   if (!token) return null;
-  const u = store.get('SELECT a.* FROM sessions s JOIN accounts a ON a.user_id = s.user_id WHERE s.token = ?', [token]);
+  const u = store.get('SELECT a.*, s.created_at AS session_created FROM sessions s JOIN accounts a ON a.user_id = s.user_id WHERE s.token = ?', [token]);
+  const isDemo = DEMO_ACCOUNTS.some(a => a.token === token);
+  if (u && !isDemo && Date.now() - new Date(u.session_created).getTime() > SESSION_DAYS * 86400000) {
+    store.run('DELETE FROM sessions WHERE token = ?', [token]);
+    return null;
+  }
   return u ? { user: publicUser(u), org: publicOrg(getOrg(u.org_id)) } : null;
 }
 

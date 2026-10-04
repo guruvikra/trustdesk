@@ -24,16 +24,22 @@ function LiveWidget({ onTicket, publicKey }) {
       setThread(t => [...t, { role: 'bot', ...out }]);
     } catch (e) { toast(e.message, 'error'); } finally { setBusy(false); }
   };
+  const decide = (ev, decided) => setThread(t => t.map(m => (m.event_id === ev.event_id ? { ...m, decided } : m)));
   const outcome = async (ev, resolved) => {
     if (resolved) {
-      await api(`/api/public/deflections/${ev.event_id}/outcome`, { method: 'POST', body: { resolved: true }, headers });
-      setThread(t => [...t, { role: 'system', text: 'Glad that helped! (counted as deflected — no ticket created)' }]);
-    } else setHandoff(ev);
+      try {
+        await api(`/api/public/deflections/${ev.event_id}/outcome`, { method: 'POST', body: { resolved: true }, headers });
+        decide(ev, 'resolved');
+        setThread(t => [...t, { role: 'system', text: 'Glad that helped! (counted as deflected — no ticket created)' }]);
+      } catch (e) { toast(e.message, 'error'); }
+    } else { decide(ev, 'handoff'); setHandoff(ev); }
   };
   const submitTicket = async () => {
     try {
       const out = await api(`/api/public/deflections/${handoff.event_id}/outcome`, { method: 'POST', body: { resolved: false, ...form }, headers });
-      setThread(t => [...t, { role: 'system', text: `Ticket ${out.ticket_id} created. Our team will reply by email.`, ticket: out.ticket_id }]);
+      setThread(t => [...t, out.ticket_id
+        ? { role: 'system', text: `Ticket ${out.ticket_id} ${out.replayed ? 'was already created' : 'created'}. Our team will follow up at ${form.email}.`, ticket: out.ticket_id }
+        : { role: 'system', text: 'This question was already marked as answered.' }]);
       setHandoff(null);
       onTicket(out.ticket_id);
     } catch (e) { toast(e.message, 'error'); }
@@ -50,11 +56,13 @@ function LiveWidget({ onTicket, publicKey }) {
               <div key={i} className={`bubble bot ${m.answered ? '' : 'unknown'}`} style={{ maxWidth: '95%' }}>
                 <div className="small" style={{ lineHeight: 1.55 }}>{m.answer.replace(/\[(\d+)\]/g, '[$1]')}</div>
                 {m.citations.length > 0 && <div className="tiny muted mt">Sources: {[...new Map(m.citations.map(c => [c.doc_id, c])).values()].map(c => `${c.title} — ${c.heading}`).join(' · ')}</div>}
-                <div className="row mt">
-                  <span className="tiny muted">Did this answer your question?</span>
-                  <button className="btn sm" onClick={() => outcome(m, true)} disabled={!m.answered}>Yes</button>
-                  <button className="btn sm" onClick={() => outcome(m, false)}>No, contact support</button>
-                </div>
+                {!m.decided ? (
+                  <div className="row mt">
+                    <span className="tiny muted">{m.answered ? 'Did this answer your question?' : 'Want a person to help?'}</span>
+                    {m.answered && <button className="btn sm" onClick={() => outcome(m, true)}>Yes</button>}
+                    <button className="btn sm" onClick={() => outcome(m, false)}>{m.answered ? 'No, contact support' : 'Contact support'}</button>
+                  </div>
+                ) : <div className="tiny muted mt">{m.decided === 'resolved' ? 'Marked as answered' : 'Sent to support'}</div>}
               </div>
             ))}
         {busy && <div className="small muted"><Spinner /> Looking that up…</div>}
@@ -78,7 +86,7 @@ function LiveWidget({ onTicket, publicKey }) {
 
 export default function WidgetPage({ org }) {
   const [stats, setStats] = useState(null);
-  const load = () => api('/api/stats').then(s => setStats(s.widget));
+  const load = () => api('/api/stats').then(s => setStats(s.widget)).catch(() => {});
   useEffect(() => { load(); }, []);
   const origin = window.location.origin;
   const snippet = `<script src="${origin}/widget.js" data-trustdesk="${origin}" data-workspace="${org.public_key}" defer></script>`;

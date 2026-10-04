@@ -21,14 +21,19 @@ function findOrCreateCustomer({ email, name }) {
  * @param {object} t channel, subject, body, requester_email, requester_name, order_id, source_ref, ticket_id, created_at
  * @param {{autoTriage?: boolean}} opts auto-triage runs in the background so the caller is never blocked.
  */
+// Anyone can type any email into a public form, so those tickets are not linked to customer
+// records or orders (no account data reaches the AI or the reply) until an agent verifies them.
+const PUBLIC_CHANNELS = ['web_widget', 'support_form'];
+
 function createTicket(t, { autoTriage = true } = {}) {
   if (!t.subject && !t.body) throw Object.assign(new Error('subject or body is required'), { status: 400 });
   const ticketId = t.ticket_id || `tkt_${uuidv4().replace(/-/g, '').slice(0, 8)}`;
   const existing = db.get('SELECT ticket_id FROM tickets WHERE ticket_id = ?', [ticketId]);
   if (existing) return { ticket: getTicket(ticketId), created: false };
 
-  const customer = findOrCreateCustomer({ email: t.requester_email, name: t.requester_name });
-  let orderId = t.order_id || (String(`${t.subject} ${t.body}`).match(/\bord_[a-z0-9]+\b/i) || [])[0] || null;
+  const isPublic = PUBLIC_CHANNELS.includes(t.channel);
+  const customer = isPublic ? null : findOrCreateCustomer({ email: t.requester_email, name: t.requester_name });
+  let orderId = isPublic ? null : t.order_id || (String(`${t.subject} ${t.body}`).match(/\bord_[a-z0-9]+\b/i) || [])[0] || null;
   if (orderId) {
     const order = db.get('SELECT customer_id FROM orders WHERE order_id = ?', [orderId]);
     // Only link orders that belong to this requester, so no other customer's data leaks into context.
@@ -42,11 +47,8 @@ function createTicket(t, { autoTriage = true } = {}) {
   db.run('INSERT INTO ticket_messages (message_id, ticket_id, author_type, author, body, internal, created_at) VALUES (?,?,?,?,?,0,?)',
     [`msg_${uuidv4().slice(0, 10)}`, ticketId, 'customer', t.requester_email || 'customer', String(t.body || ''), now]);
 
-  if (autoTriage) {
-    setImmediate(async () => {
-      try { await agent.triage(agent.loadContext(ticketId), { user: { email: 'auto-triage' } }); } catch (e) { console.error('[auto-triage]', e.message); }
-    });
-  }
+  // Every new ticket goes through the workspace's Autopilot (triage / draft / auto-reply) in the background.
+  if (autoTriage) require('./automation').onTicketCreated(ticketId, t.channel || 'manual');
   return { ticket: getTicket(ticketId), created: true };
 }
 
@@ -80,14 +82,18 @@ function getTicket(ticketId) {
   const order = orderRow ? { ...orderRow, items: parseJson(orderRow.items_json, []), items_json: undefined } : null;
   const count = customer ? db.get('SELECT COUNT(*) AS n FROM orders WHERE customer_id = ? AND replacement_for IS NULL', [customer.customer_id]).n : null;
   const draft = db.get("SELECT * FROM drafts WHERE ticket_id = ? AND status != 'superseded' ORDER BY created_at DESC LIMIT 1", [ticketId]);
+  const matched = !customer && row.requester_email ? db.get('SELECT customer_id, name FROM customers WHERE lower(email) = lower(?)', [row.requester_email]) : null;
   return {
     ticket_id: row.ticket_id, channel: row.channel, subject: row.subject, body: row.body, created_at: row.created_at,
+    unverified_match: matched && PUBLIC_CHANNELS.includes(row.channel) ? matched : null,
     status: row.status, assignee: row.assignee, requester_email: row.requester_email, source_ref: row.source_ref,
     customer: customer ? { ...customer, verified: Boolean(customer.verified), tags: parseJson(customer.tags_json, []), tags_json: undefined } : null,
     order,
     policy_facts: computeFacts(row, order, customer, { customerOrderCount: count }),
     triage: parseJson(row.triage_json, null), triage_run_id: row.triage_run_id,
-    draft: draft ? { draft_id: draft.draft_id, run_id: draft.run_id, body: draft.body, original_body: draft.original_body, citations: parseJson(draft.citations_json, []), status: draft.status, reviewed_by: draft.reviewed_by, updated_at: draft.updated_at } : null,
+    draft: draft ? { draft_id: draft.draft_id, run_id: draft.run_id, body: draft.body, original_body: draft.original_body, citations: parseJson(draft.citations_json, []), status: draft.status, reviewed_by: draft.reviewed_by, updated_at: draft.updated_at,
+      confidence: (parseJson((db.get('SELECT output_json FROM agent_runs WHERE run_id = ?', [draft.run_id]) || {}).output_json, {}) || {}).confidence ?? null } : null,
+    autopilot: db.all('SELECT * FROM automation_events WHERE ticket_id = ? ORDER BY created_at DESC LIMIT 1', [ticketId]).map(e => ({ ...e, reasons: parseJson(e.reasons_json, []), reasons_json: undefined }))[0] || null,
     actions: actions.list({ ticket_id: ticketId }),
     messages: db.all('SELECT * FROM ticket_messages WHERE ticket_id = ? ORDER BY created_at ASC', [ticketId]).map(m => ({ ...m, internal: Boolean(m.internal) })),
     runs: db.all('SELECT run_id, run_type, provider, final_status, latency_ms, created_at FROM agent_runs WHERE ticket_id = ? ORDER BY created_at DESC', [ticketId]),

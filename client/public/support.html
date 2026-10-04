@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contact support</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --accent: #4f46e5; --text: #151a2d; --muted: #646b82; --border: #e2e5ee; --bg: #f6f7fb; --green: #0f9d6b; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Inter, system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
+    body.embed { background: transparent; }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 40px 20px; }
+    body.embed .wrap { padding: 12px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; margin-bottom: 6px; }
+    .mark { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #6366f1, #22d3ee); }
+    h1 { font-size: 28px; letter-spacing: -0.02em; margin: 18px 0 6px; }
+    .sub { color: var(--muted); margin: 0 0 22px; }
+    .card { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 22px; box-shadow: 0 1px 3px rgba(16,24,40,.06); }
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin: 14px 0 6px; }
+    label:first-child { margin-top: 0; }
+    input, textarea { width: 100%; font: inherit; padding: 10px 12px; border: 1px solid #d5d9e4; border-radius: 9px; outline: none; background: #fff; color: var(--text); }
+    input:focus, textarea:focus { border-color: #6366f1; box-shadow: 0 0 0 3px #eef0ff; }
+    textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    button { font: inherit; font-weight: 600; border-radius: 9px; padding: 11px 18px; cursor: pointer; border: 1px solid transparent; }
+    .primary { background: var(--accent); color: #fff; }
+    .primary:disabled { opacity: .55; cursor: not-allowed; }
+    .ghost { background: #fff; border-color: #d5d9e4; color: var(--text); }
+    .actions { display: flex; gap: 10px; align-items: center; margin-top: 18px; }
+    .hint { font-size: 12.5px; color: var(--muted); }
+    .suggest { margin-top: 18px; border: 1px solid #dfe3fb; background: #f5f7ff; border-radius: 12px; padding: 16px; display: none; }
+    .suggest.show { display: block; }
+    .suggest h3 { margin: 0 0 8px; font-size: 14px; display: flex; gap: 8px; align-items: center; }
+    .suggest .ans { line-height: 1.6; }
+    .suggest .src { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+    .pill { font-size: 11px; font-weight: 700; color: var(--accent); background: #e6e8ff; border-radius: 999px; padding: 2px 8px; }
+    .done { text-align: center; padding: 30px 10px; }
+    .done .ic { width: 52px; height: 52px; border-radius: 50%; background: #e6f6ef; color: var(--green); display: grid; place-items: center; margin: 0 auto 14px; font-size: 26px; }
+    .reply { text-align: left; margin-top: 18px; border: 1px solid var(--border); border-radius: 12px; padding: 16px; white-space: pre-wrap; line-height: 1.6; background: #fff; }
+    .reply .from { font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; white-space: normal; }
+    .err { color: #b42318; font-size: 13px; margin-top: 10px; }
+    .foot { text-align: center; color: #9aa1b5; font-size: 12px; margin-top: 18px; }
+    .spin { display: inline-block; width: 14px; height: 14px; border: 2px solid #c7cbe0; border-top-color: var(--accent); border-radius: 50%; animation: s 1s linear infinite; vertical-align: -2px; }
+    @keyframes s { to { transform: rotate(360deg); } }
+    @media (max-width: 560px) { .row2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand"><div class="mark"></div><span id="ws">Support</span></div>
+    <div id="view-form">
+      <h1>How can we help?</h1>
+      <p class="sub">Describe your issue — we'll suggest an answer from our help articles as you type.</p>
+      <form class="card" id="f" novalidate>
+        <div class="row2">
+          <div><label for="name">Your name</label><input id="name" autocomplete="name" /></div>
+          <div><label for="email">Email *</label><input id="email" type="email" autocomplete="email" required /></div>
+        </div>
+        <label for="subject">Subject *</label><input id="subject" required placeholder="e.g. Package has not arrived" />
+        <label for="message">Message *</label><textarea id="message" required placeholder="Tell us what happened. Include dates and your order number if you have one."></textarea>
+        <label for="order">Order number (optional)</label><input id="order" placeholder="e.g. ord_5002" />
+        <div class="suggest" id="suggest">
+          <h3><span class="pill">SUGGESTED ANSWER</span> This might solve it right away</h3>
+          <div class="ans" id="ans"></div>
+          <div class="src" id="src"></div>
+          <div class="actions"><button type="button" class="ghost" id="solved">Yes, this answers my question</button><span class="hint">Otherwise, send your request below.</span></div>
+        </div>
+        <div class="actions"><button class="primary" id="submit" type="submit">Send request</button><span class="hint" id="status"></span></div>
+        <div class="err" id="err"></div>
+      </form>
+    </div>
+    <div id="view-done" class="card done" style="display:none"></div>
+    <div class="foot">Powered by TrustDesk · answers come only from published help articles</div>
+  </div>
+  <script>
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var key = params.get('key') || '';
+      if (params.get('embed')) document.body.classList.add('embed');
+      var headers = { 'Content-Type': 'application/json' };
+      if (key) headers['X-Workspace-Key'] = key;
+      var $ = function (id) { return document.getElementById(id); };
+      var last = { text: '', event: null, answered: false };
+      var timer = null;
+
+      fetch('/api/public/workspace', { headers: headers }).then(function (r) { return r.json(); }).then(function (w) { if (w.name) { $('ws').textContent = w.name + ' Support'; document.title = 'Contact ' + w.name + ' support'; } }).catch(function () {});
+
+      function post(path, body) {
+        return fetch(path, { method: 'POST', headers: headers, body: JSON.stringify(body) }).then(function (r) {
+          return r.json().then(function (j) { if (!r.ok) throw new Error(j.detail || 'Request failed'); return j; });
+        });
+      }
+      function questionText() { return ($('subject').value.trim() + '. ' + $('message').value.trim()).replace(/^\.\s*/, ''); }
+      function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+
+      function suggest() {
+        var q = questionText();
+        if (q.length < 20 || q === last.text) return;
+        $('status').innerHTML = '<span class="spin"></span> Looking for an answer…';
+        post('/api/public/ask', { question: q }).then(function (r) {
+          last = { text: q, event: r.event_id, answered: r.answered };
+          $('status').textContent = '';
+          if (r.answered) {
+            $('ans').textContent = r.answer.replace(/\s*\[\d+\]/g, '');
+            var titles = []; (r.citations || []).forEach(function (c) { var t = c.title + ' — ' + c.heading; if (titles.indexOf(t) < 0) titles.push(t); });
+            $('src').textContent = titles.length ? 'From: ' + titles.join(' · ') : '';
+            $('suggest').classList.add('show');
+          } else { $('suggest').classList.remove('show'); }
+        }).catch(function () { $('status').textContent = ''; });
+      }
+      ['subject', 'message'].forEach(function (id) {
+        $(id).addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(suggest, 800); });
+      });
+
+      function showDone(html) { $('view-form').style.display = 'none'; $('view-done').style.display = 'block'; $('view-done').innerHTML = html; }
+
+      $('solved').addEventListener('click', function () {
+        if (!last.event) return;
+        post('/api/public/deflections/' + last.event + '/outcome', { resolved: true }).catch(function () {});
+        showDone('<div class="ic">✓</div><h2>Glad that helped!</h2><p class="sub">No ticket was needed. You can close this page.</p>');
+      });
+
+      $('f').addEventListener('submit', function (e) {
+        e.preventDefault();
+        $('err').textContent = '';
+        var email = $('email').value.trim(), subject = $('subject').value.trim(), message = $('message').value.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $('err').textContent = 'Please enter a valid email so we can reply.'; return; }
+        if (!subject || message.length < 5) { $('err').textContent = 'Please add a subject and describe your issue.'; return; }
+        $('submit').disabled = true;
+        $('status').innerHTML = '<span class="spin"></span> Sending…';
+        var q = questionText();
+        var ready = last.text === q && last.event ? Promise.resolve(last) : post('/api/public/ask', { question: q }).then(function (r) { return { event: r.event_id }; });
+        ready.then(function (l) {
+          return post('/api/public/deflections/' + l.event + '/outcome', { resolved: false, channel: 'support_form', email: email, name: $('name').value.trim(), subject: subject, order_id: $('order').value.trim() || undefined });
+        }).then(function (out) {
+          showDone('<div class="ic">✓</div><h2>Request received</h2><p class="sub">Ticket <b>' + esc(out.ticket_id) + '</b> — we\'ll reply to ' + esc(email) + '.</p><div id="live" class="hint"><span class="spin"></span> Checking for an instant answer…</div>');
+          var tries = 0;
+          (function check() {
+            tries++;
+            fetch('/api/public/tickets/' + encodeURIComponent(out.ticket_id) + '?email=' + encodeURIComponent(email), { headers: headers }).then(function (r) { return r.json(); }).then(function (t) {
+              if (t.reply) { $('live').outerHTML = '<div class="reply"><div class="from">' + esc(t.reply.from) + ' replied:</div>' + esc(t.reply.body.replace(/\s*\[KB-[A-Z0-9-]+\]/g, '')) + '</div>'; return; }
+              if (tries < 8) setTimeout(check, 1500); else $('live').textContent = 'A member of our team will get back to you soon.';
+            }).catch(function () { if (tries < 8) setTimeout(check, 1500); });
+          })();
+        }).catch(function (e2) { $('err').textContent = e2.message; $('submit').disabled = false; $('status').textContent = ''; });
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -47,6 +47,7 @@ async function triage(input, { provider } = {}) {
         sentiment: ENUMS.sentiment.includes(json.sentiment) ? json.sentiment : 'neutral',
         should_escalate: Boolean(json.should_escalate),
         rationale: String(json.rationale || '').slice(0, 400),
+        certainty: Number.isFinite(Number(json.confidence)) ? Math.max(0, Math.min(1, Number(json.confidence))) : 0.7,
       };
       return { output: out, meta };
     } catch (e) {

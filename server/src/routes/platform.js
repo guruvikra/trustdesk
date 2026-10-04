@@ -117,6 +117,12 @@ router.get('/stats', (req, res) => {
   });
 });
 
+// --- Helpdesk Autopilot ------------------------------------------------------------------
+const automation = require('../services/automation');
+router.get('/automation/settings', (req, res) => res.json(automation.getSettings()));
+router.put('/automation/settings', requireRole('support_manager', 'admin'), (req, res) => res.json(automation.saveSettings(req.body || {}, req.user)));
+router.get('/automation/events', (req, res) => res.json({ events: automation.listEvents({ limit: req.query.limit }), summary: automation.summary() }));
+
 // --- Analytics for the dashboard ----------------------------------------------------
 router.get('/analytics', (req, res) => {
   const days = Math.min(90, Math.max(7, Number(req.query.days) || 14));
@@ -177,6 +183,7 @@ router.get('/analytics', (req, res) => {
     }),
     deflection: { asked: deflect.asked || 0, answered: deflect.answered || 0, deflected: deflect.deflected || 0, tickets: deflect.tickets || 0 },
     drafts: { total: drafts.total || 0, sent: drafts.sent || 0, edited: drafts.edited || 0, rejected: drafts.rejected || 0 },
+    autopilot: automation.summary(),
     categories: db.all("SELECT json_extract(triage_json, '$.category') AS category, COUNT(*) AS n FROM tickets WHERE triage_json IS NOT NULL GROUP BY category ORDER BY n DESC"),
     channels: db.all('SELECT channel, COUNT(*) AS n FROM tickets GROUP BY channel ORDER BY n DESC'),
   });

@@ -66,6 +66,13 @@ function defaultVisibility(audience) {
   return /engineer|administrator|internal|staff only/i.test(audience || '') ? 'internal' : 'public';
 }
 
+// Citation IDs must look like KB-XXX-001 so replies can cite them as [KB-XXX-001].
+function normalizeId(raw) {
+  if (!raw || !String(raw).trim()) return null;
+  const id = String(raw).trim().toUpperCase().replace(/[^A-Z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return id ? (id.startsWith('KB-') ? id : `KB-${id}`) : null;
+}
+
 function slugId(title) {
   return 'KB-' + String(title).toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 24) + '-' + uuidv4().slice(0, 4).toUpperCase();
 }
@@ -73,7 +80,7 @@ function slugId(title) {
 // Stores (or replaces) one document and its chunks. Returns the stored document row.
 function upsertDocument({ doc_id, title, content, audience, version, visibility, source_type = 'manual', source_path = null }) {
   const parsed = parseMarkdownDoc(content, { doc_id, title, audience, version, visibility });
-  const id = (doc_id || parsed.doc_id || slugId(parsed.title)).trim();
+  const id = normalizeId(doc_id || parsed.doc_id) || slugId(parsed.title);
   const finalTitle = title || parsed.title;
   const finalAudience = audience || parsed.audience;
   const scan = scanDocument({ content, audience: finalAudience, source_type });
@@ -167,6 +174,8 @@ async function extractFile({ originalname, buffer, mimetype }) {
     const out = await pdf(Buffer.from(buffer));
     return { title: name.replace(/\.pdf$/i, ''), content: markHeadings(out.text.replace(/\n{3,}/g, '\n\n').trim()), source_type: 'pdf_upload' };
   }
+  if (!/\.(md|markdown|txt|html?)$/i.test(name)) throw new Error('Unsupported file type (use PDF, Markdown, text or HTML)');
+  if (buffer.includes(0)) throw new Error('File looks binary, not text');
   const text = buffer.toString('utf8');
   if (/\.html?$/i.test(name)) return { ...htmlToText(text), source_type: 'file_upload', title: name.replace(/\.html?$/i, '') };
   const h1 = (text.match(/^#\s+(.+)$/m) || [])[1];
@@ -198,12 +207,30 @@ function htmlToText(html) {
   return { title: title ? title.trim() : null, content: body };
 }
 
-async function fetchUrl(url) {
-  if (!/^https?:\/\//i.test(url)) throw new Error('URL must start with http:// or https://');
+// Blocks requests to internal networks (SSRF): loopback, private, link-local, metadata, odd ports.
+async function assertPublicUrl(raw) {
+  let u;
+  try { u = new URL(raw); } catch (_) { throw new Error('Invalid URL'); }
+  if (!['http:', 'https:'].includes(u.protocol)) throw new Error('URL must start with http:// or https://');
+  if (u.port && !['80', '443'].includes(u.port)) throw new Error('Only standard web ports (80/443) are allowed');
+  const net = require('net');
+  const addrs = net.isIP(u.hostname) ? [{ address: u.hostname }] : await require('dns').promises.lookup(u.hostname, { all: true }).catch(() => { throw new Error(`Could not resolve ${u.hostname}`); });
+  const isPrivate = a => /^(127\.|10\.|0\.|169\.254\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.)/.test(a) || a === '::1' || /^f[cd]|^fe80|^::ffff:(127|10|192\.168|169\.254)\./i.test(a) || a === '::';
+  if (addrs.some(a => isPrivate(a.address))) throw new Error('URLs on private or internal networks are not allowed');
+  return u;
+}
+
+async function fetchUrl(url, hops = 0) {
+  await assertPublicUrl(url);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 15000);
   try {
-    const res = await fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'TrustDesk-KB-Sync/1.0' } });
+    const res = await fetch(url, { signal: controller.signal, redirect: 'manual', headers: { 'User-Agent': 'TrustDesk-KB-Sync/1.0' } });
+    // Follow redirects manually so every hop is re-checked against internal networks.
+    if (res.status >= 300 && res.status < 400) {
+      if (hops >= 3) throw new Error('Too many redirects');
+      return fetchUrl(new URL(res.headers.get('location') || '', url).toString(), hops + 1);
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`);
     const type = res.headers.get('content-type') || '';
     if (type.includes('pdf')) return extractFile({ originalname: 'page.pdf', buffer: Buffer.from(await res.arrayBuffer()), mimetype: 'application/pdf' });

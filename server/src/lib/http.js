@@ -10,7 +10,7 @@ function httpError(status, message) {
 
 function bearer(req) {
   const header = req.get('authorization') || '';
-  return header.startsWith('Bearer ') ? header.slice(7) : req.query.token;
+  return header.startsWith('Bearer ') ? header.slice(7) : null;
 }
 
 // Session auth: resolves the user and their organisation, then runs the rest of the request

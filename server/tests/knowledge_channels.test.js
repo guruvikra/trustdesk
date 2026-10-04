@@ -104,7 +104,8 @@ test('widget answers publicly, then hands off to a real ticket when unresolved',
   assert.strictEqual(out.body.outcome, 'ticket_created');
   const t = await ctx.api('GET', `/api/tickets/${out.body.ticket_id}`);
   assert.strictEqual(t.body.channel, 'web_widget');
-  assert.strictEqual(t.body.customer.email, 'new.person@example.com');
+  assert.strictEqual(t.body.customer, null, 'public-form requesters are not linked to customer records');
+  assert.strictEqual(t.body.requester_email, 'new.person@example.com');
   // ord_5002 belongs to another customer, so it must not be linked.
   assert.strictEqual(t.body.order, null);
 

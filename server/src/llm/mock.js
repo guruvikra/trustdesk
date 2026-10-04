@@ -56,7 +56,10 @@ function triage({ text, facts, flags, accountChange }) {
     || (category === 'account_security')
     || (category === 'general' && Math.max(...Object.values(scores)) === 0);
 
-  return { category, priority, sentiment, should_escalate: escalate, rationale: reason };
+  // How decisive the classification was (used in the answer-confidence score).
+  const best = Math.max(...Object.values(scores));
+  const certainty = flags.length || accountChange || s.duplicate_charge ? 0.9 : +Math.min(1, best / 6).toFixed(2);
+  return { category, priority, sentiment, should_escalate: escalate, rationale: reason, certainty };
 }
 
 // --- Draft writer -------------------------------------------------------
@@ -171,8 +174,9 @@ function answer({ question, sources }) {
     });
   });
   picked.sort((a, b) => b.score - a.score);
-  // Keep the best sentences, then present them in source order so the answer reads naturally.
-  const top = picked.slice(0, 3).sort((a, b) => a.n - b.n || a.pos - b.pos);
+  // Keep only sentences nearly as relevant as the best one, then present them in source order.
+  const best = picked.length ? picked[0].score : 0;
+  const top = picked.filter(p => p.score >= best * 0.6).slice(0, 3).sort((a, b) => a.n - b.n || a.pos - b.pos);
   if (!top.length) return { answer: '', used_sources: [], answerable: false };
   return {
     answer: top.map(p => `${p.sen} [${p.n}]`).join(' '),

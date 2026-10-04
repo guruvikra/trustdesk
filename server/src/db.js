@@ -90,6 +90,13 @@ CREATE TABLE IF NOT EXISTS external_links (
   ticket_id TEXT NOT NULL, platform TEXT NOT NULL, external_id TEXT NOT NULL, url TEXT, created_by TEXT, created_at TEXT NOT NULL,
   PRIMARY KEY (ticket_id, platform)
 );
+CREATE TABLE IF NOT EXISTS workspace_settings (
+  key TEXT PRIMARY KEY, value_json TEXT NOT NULL, updated_by TEXT, updated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS automation_events (
+  event_id TEXT PRIMARY KEY, ticket_id TEXT NOT NULL, trigger TEXT NOT NULL, mode TEXT NOT NULL, outcome TEXT NOT NULL,
+  confidence REAL, threshold REAL, reasons_json TEXT DEFAULT '[]', run_id TEXT, detail TEXT, created_at TEXT NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_chunks_doc ON doc_chunks(doc_id);
 CREATE INDEX IF NOT EXISTS idx_runs_ticket ON agent_runs(ticket_id);
 CREATE INDEX IF NOT EXISTS idx_actions_ticket ON tool_actions(ticket_id);

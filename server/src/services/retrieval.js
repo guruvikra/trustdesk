@@ -66,14 +66,25 @@ class SearchIndex {
         if (!includeQuarantined) continue;
       }
       if (visibility === 'public' && c.visibility === 'internal') continue;
-      const coverage = totalWeight ? groups.filter(g => g.forms.some(f => c.tf.has(f))).reduce((a, g) => a + g.weight, 0) / totalWeight : 0;
+      const hit = groups.filter(g => g.forms.some(f => c.tf.has(f)));
+      const coverage = totalWeight ? hit.reduce((a, g) => a + g.weight, 0) / totalWeight : 0;
       scored.push({
         chunk_id: c.chunk_id, doc_id: c.doc_id, title: c.title, heading: c.heading, content: c.content,
         visibility: c.visibility, trust: c.trust, score: +score.toFixed(3), coverage: +coverage.toFixed(2), matched_terms: matched,
+        matched_groups: hit.length, query_groups: groups.length,
       });
     }
     scored.sort((a, b) => b.score - a.score);
     return { results: scored.slice(0, limit), quarantined_doc_ids: [...quarantinedHits] };
+  }
+
+  // IDF-weighted share of the query's words that appear in one chunk (0..1).
+  coverage(query, chunkId) {
+    const c = this.chunks.find(x => x.chunk_id === chunkId);
+    if (!c) return 0;
+    const groups = queryGroups(query).map(g => ({ ...g, weight: this.df.has(g.base) ? this.idf(g.base) : this.oovWeight }));
+    const total = groups.reduce((a, g) => a + g.weight, 0);
+    return total ? +(groups.filter(g => g.forms.some(f => c.tf.has(f))).reduce((a, g) => a + g.weight, 0) / total).toFixed(2) : 0;
   }
 
   // Best chunk per document, for "which documents are relevant" questions.

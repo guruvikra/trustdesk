@@ -8,7 +8,7 @@ import { go } from '../App';
 export default function Traces({ runId }) {
   const [runs, setRuns] = useState(null);
   const [type, setType] = useState('');
-  useEffect(() => { api(`/api/agent-runs?limit=100${type ? `&run_type=${type}` : ''}`).then(setRuns); }, [type]);
+  useEffect(() => { api(`/api/agent-runs?limit=100${type ? `&run_type=${type}` : ''}`).then(setRuns).catch(() => setRuns([])); }, [type]);
   const selected = runId || (runs && runs[0] && runs[0].run_id);
   return (
     <div className="grid" style={{ gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', alignItems: 'start' }}>

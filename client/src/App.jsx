@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import {
-  LayoutDashboard, Inbox, Gavel, Sparkles, BookOpen, MessageSquare, Plug, FlaskConical, Activity, Settings, LogOut, ShieldCheck,
+  LayoutDashboard, Inbox, Gavel, Sparkles, BookOpen, MessageSquare, Plug, FlaskConical, Activity, Settings, LogOut, ShieldCheck, Bot, ClipboardList,
 } from 'lucide-react';
 import { api, session } from './api';
 import { ToastProvider } from './components/ui';
 import Dashboard from './pages/Dashboard';
 import InboxPage from './pages/Inbox';
 import Approvals from './pages/Approvals';
+import Automation from './pages/Automation';
+import SupportForm from './pages/SupportForm';
 import Assistant from './pages/Assistant';
 import Knowledge from './pages/Knowledge';
 import WidgetPage from './pages/Widget';
@@ -22,11 +24,13 @@ const NAV = [
   { section: 'Helpdesk' },
   { id: 'inbox', label: 'Inbox', icon: Inbox, title: 'Helpdesk inbox', sub: 'Triage, cited drafts and approval-gated actions' },
   { id: 'approvals', label: 'Approvals', icon: Gavel, title: 'Approval queue', sub: 'Sensitive actions waiting for a manager', countKey: 'approvals_pending' },
+  { id: 'automation', label: 'Autopilot', icon: Bot, title: 'Autopilot', sub: 'What happens automatically when a ticket arrives: triage, draft, or answer when confident' },
   { section: 'Knowledge' },
-  { id: 'assistant', label: 'Internal Assistant', icon: Sparkles, title: 'Internal Assistant', sub: 'Ask the team knowledge base — answers cite their sources' },
+  { id: 'assistant', label: 'AI Assistant', icon: Sparkles, title: 'AI Assistant', sub: 'Ask your knowledge base — every answer cites its sources' },
   { id: 'knowledge', label: 'Knowledge Base', icon: BookOpen, title: 'Knowledge Base', sub: 'Sources, ingestion, quarantine and search playground' },
   { section: 'Channels' },
-  { id: 'widget', label: 'Support Widget', icon: MessageSquare, title: 'Support widget & form deflector', sub: 'Customer-facing answers before a ticket is created' },
+  { id: 'support-form', label: 'Support Form', icon: ClipboardList, title: 'Support form deflector', sub: 'A contact form that answers customers before a ticket is created' },
+  { id: 'widget', label: 'Chat Widget', icon: MessageSquare, title: 'Chat widget', sub: 'Instant, sourced answers on your website' },
   { id: 'integrations', label: 'Integrations', icon: Plug, title: 'Integrations', sub: 'Zendesk, Freshdesk, Intercom, Front, Linear, widget and webhooks' },
   { section: 'Quality' },
   { id: 'evals', label: 'Evaluations', icon: FlaskConical, title: 'Evaluations', sub: 'Run the provided eval cases and inspect every check' },
@@ -53,8 +57,10 @@ export default function App() {
 
   useEffect(() => {
     const onHash = () => setRoute(parseHash());
+    const onLogout = () => setAuth(null);
     window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
+    window.addEventListener('trustdesk:logout', onLogout);
+    return () => { window.removeEventListener('hashchange', onHash); window.removeEventListener('trustdesk:logout', onLogout); };
   }, []);
 
   // Refresh the session (role or workspace name may have changed) and keep the approvals badge live.
@@ -87,14 +93,16 @@ export default function App() {
   }
 
   const { user, org } = auth;
-  const pageId = PUBLIC_PAGES.includes(route.page) || route.page === 'overview' ? 'dashboard' : route.page;
+  const pageId = NAV.some(n => n.id === route.page) ? route.page : 'dashboard';
   const nav = NAV.find(n => n.id === pageId) || NAV[0];
   const pages = {
     dashboard: <Dashboard user={user} org={org} />,
     inbox: <InboxPage ticketId={route.param} user={user} />,
     approvals: <Approvals user={user} />,
+    automation: <Automation user={user} />,
+    'support-form': <SupportForm org={org} />,
     assistant: <Assistant />,
-    knowledge: <Knowledge user={user} docId={route.param} />,
+    knowledge: <Knowledge user={user} org={org} docId={route.param} />,
     widget: <WidgetPage org={org} />,
     integrations: <Integrations user={user} org={org} param={route.param} />,
     evals: <Evals />,

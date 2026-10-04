@@ -25,7 +25,7 @@ export default function Evals() {
     const id = selectId || (list.find(r => r.status === 'completed') || {}).eval_run_id;
     if (id) setRun(await api(`/api/eval-runs/${id}`));
   };
-  useEffect(() => { load(); api('/api/workspace').then(setWs); }, []);
+  useEffect(() => { load().catch(e => toast(e.message, 'error')); api('/api/workspace').then(setWs).catch(() => {}); }, []);
 
   const start = async (provider) => {
     setBusy(provider || 'default');

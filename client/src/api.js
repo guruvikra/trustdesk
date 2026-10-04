@@ -21,6 +21,11 @@ export async function api(path, { method = 'GET', body, form, headers = {} } = {
   const text = await res.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch { data = { detail: text }; }
+  if (res.status === 401 && session.token && !path.startsWith('/api/auth/')) {
+    // Session expired or the user was removed: send them back to the login page.
+    session.clear();
+    window.dispatchEvent(new Event('trustdesk:logout'));
+  }
   if (!res.ok) {
     const err = new Error((data && data.detail) || `HTTP ${res.status}`);
     err.status = res.status;

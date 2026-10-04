@@ -42,7 +42,10 @@ async function ask({ question, visibility = 'internal', ticketId = null, user = 
   const top = results[0];
   trace.step('retrieve', { chunks: results.map(r => ({ chunk_id: r.chunk_id, score: r.score, coverage: r.coverage })), quarantined_doc_ids });
 
-  if (!top || top.coverage < MIN_COVERAGE) {
+  // Also require two distinct matching terms when the question has two or more, so one shared
+  // word ("store", "policy") is never enough to answer.
+  const enoughTerms = top && top.matched_groups >= Math.min(2, top.query_groups);
+  if (!top || top.coverage < MIN_COVERAGE || !enoughTerms) {
     trace.step('confidence_gate', { passed: false, top_score: top ? top.score : 0, top_coverage: top ? top.coverage : 0 });
     return finish({
       answered: false, confidence: top ? top.coverage : 0, citations: [], quarantined: quarantined_doc_ids,
@@ -70,6 +73,7 @@ async function ask({ question, visibility = 'internal', ticketId = null, user = 
 
 function feedback(runId, rating) {
   if (!['up', 'down'].includes(rating)) throw Object.assign(new Error('rating must be "up" or "down"'), { status: 400 });
+  if (!db.get('SELECT run_id FROM agent_runs WHERE run_id = ?', [runId])) throw Object.assign(new Error('Answer not found'), { status: 404 });
   db.run('UPDATE agent_runs SET feedback = ? WHERE run_id = ?', [rating, runId]);
   return { run_id: runId, feedback: rating };
 }

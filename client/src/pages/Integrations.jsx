@@ -131,7 +131,7 @@ export default function Integrations({ user, org, param }) {
   const [payload, setPayload] = useState(JSON.stringify(SAMPLE.zendesk(), null, 2));
   const [resp, setResp] = useState(null);
   const canEdit = ['support_manager', 'admin'].includes(user.role);
-  const load = () => api('/api/integrations').then(setApps);
+  const load = () => api('/api/integrations').then(setApps).catch(e => { setApps([]); toast(e.message, 'error'); });
   useEffect(() => { load(); }, []);
 
   // Returning from an OAuth redirect: #/integrations/connected=zendesk or oauth_error=...

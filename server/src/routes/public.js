@@ -25,6 +25,9 @@ router.get('/auth/demo-accounts', (req, res) => {
   res.json(accounts.DEMO_ACCOUNTS.map(a => ({ name: a.name, email: a.email, role: a.role })));
 });
 
+// Public branding for the hosted support form.
+router.get('/public/workspace', publicWorkspace, (req, res) => res.json({ name: req.org.name }));
+
 // --- Customer widget / support-form deflector --------------------------------------
 router.post('/public/ask', publicWorkspace, wrap(async (req, res) => {
   const question = String((req.body && req.body.question) || '').trim();
@@ -37,6 +40,8 @@ router.post('/public/ask', publicWorkspace, wrap(async (req, res) => {
 router.post('/public/deflections/:id/outcome', publicWorkspace, (req, res) => {
   const ev = db.get('SELECT * FROM deflection_events WHERE event_id = ?', [req.params.id]);
   if (!ev) throw httpError(404, 'Unknown deflection event');
+  // Idempotent: a repeated submit returns the first outcome instead of creating another ticket.
+  if (ev.outcome !== 'pending') return res.json({ outcome: ev.outcome, ticket_id: ev.ticket_id || undefined, replayed: true });
   const b = req.body || {};
   if (b.resolved) {
     db.run("UPDATE deflection_events SET outcome = 'deflected' WHERE event_id = ?", [ev.event_id]);
@@ -44,11 +49,19 @@ router.post('/public/deflections/:id/outcome', publicWorkspace, (req, res) => {
   }
   if (!b.email) throw httpError(400, 'email is required to open a ticket');
   const { ticket } = tickets.createTicket({
-    channel: 'web_widget', subject: b.subject || ev.question.slice(0, 80), body: b.details ? `${ev.question}\n\n${b.details}` : ev.question,
+    channel: b.channel === 'support_form' ? 'support_form' : 'web_widget', subject: b.subject || ev.question.slice(0, 80), body: b.details ? `${ev.question}\n\n${b.details}` : ev.question,
     requester_email: b.email, requester_name: b.name, order_id: b.order_id,
   });
   db.run("UPDATE deflection_events SET outcome = 'ticket_created', ticket_id = ? WHERE event_id = ?", [ticket.ticket_id, ev.event_id]);
   res.status(201).json({ outcome: 'ticket_created', ticket_id: ticket.ticket_id });
+});
+
+// Customers can check their own ticket (ticket id + the email it was opened with).
+router.get('/public/tickets/:id', publicWorkspace, (req, res) => {
+  const t = db.get('SELECT ticket_id, status, requester_email, created_at FROM tickets WHERE ticket_id = ?', [req.params.id]);
+  if (!t || !req.query.email || String(t.requester_email || '').toLowerCase() !== String(req.query.email).toLowerCase()) throw httpError(404, 'Ticket not found');
+  const reply = db.get("SELECT body, author, created_at FROM ticket_messages WHERE ticket_id = ? AND author_type = 'agent' AND internal = 0 ORDER BY created_at DESC LIMIT 1", [t.ticket_id]);
+  res.json({ ticket_id: t.ticket_id, status: t.status, created_at: t.created_at, reply: reply ? { body: reply.body, from: reply.author === 'TrustDesk Autopilot' ? 'Support (AI-assisted)' : 'Support team', at: reply.created_at } : null });
 });
 
 // --- Inbound helpdesk webhooks ----------------------------------------------------------

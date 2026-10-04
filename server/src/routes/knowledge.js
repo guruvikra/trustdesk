@@ -76,7 +76,7 @@ router.post('/documents/ingest', upload.array('files'), tenantScope, (req, res) 
   res.status(202).json({ job_id: jobId, status: 'queued' });
 });
 
-router.post('/documents/resync', (req, res) => {
+router.post('/documents/resync', requireRole('support_manager', 'admin'), (req, res) => {
   res.status(202).json({ job_id: ingest.submitIngestJob('data/knowledge_base (policy pack)', 'folder'), status: 'queued' });
 });
 

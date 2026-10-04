@@ -19,7 +19,10 @@ function contextOr404(id) {
 router.get('/tickets', (req, res) => res.json(tickets.listTickets({ status: req.query.status, q: req.query.q })));
 
 router.post('/tickets', wrap(async (req, res) => {
-  const { ticket } = tickets.createTicket({ ...req.body, channel: req.body.channel || 'manual' });
+  // Agents can't choose IDs, external refs or dates: those would spoof channels and shift policy windows.
+  const { subject, body, requester_email, requester_name, order_id } = req.body || {};
+  const channel = req.body && req.body.channel === 'simulated' ? 'simulated' : 'manual';
+  const { ticket } = tickets.createTicket({ subject, body, requester_email, requester_name, order_id, channel });
   res.status(201).json(ticket);
 }));
 
@@ -28,6 +31,13 @@ router.get('/tickets/:id', (req, res) => {
   if (!t) throw httpError(404, `Ticket ${req.params.id} not found`);
   res.json({ ...t, external_links: connectors.externalLinks(t.ticket_id) });
 });
+
+// Run the workspace's Autopilot on an existing ticket (same pipeline as for new tickets).
+router.post('/tickets/:id/autopilot', wrap(async (req, res) => {
+  const automation = require('../services/automation');
+  const ev = await automation.run(req.params.id, { trigger: `manual:${req.user.email}` });
+  res.json({ event: ev, ticket: tickets.getTicket(req.params.id) });
+}));
 
 // Escalate a ticket to engineering as a Linear issue (created once per ticket).
 router.post('/tickets/:id/linear-issue', wrap(async (req, res) => {
@@ -76,6 +86,7 @@ function getDraft(id) {
 router.patch('/drafts/:id', (req, res) => {
   const d = getDraft(req.params.id);
   if (d.status !== 'draft') throw httpError(409, `Draft is ${d.status}`);
+  if (!String((req.body && req.body.body) || '').trim()) throw httpError(400, 'Draft text cannot be empty');
   const run = db.get('SELECT retrieved_doc_ids_json FROM agent_runs WHERE run_id = ?', [d.run_id]);
   const checked = checkOutput(String(req.body.body || ''), { allowedDocIds: parseJson(run && run.retrieved_doc_ids_json, []) });
   db.run('UPDATE drafts SET body = ?, citations_json = ?, updated_at = ? WHERE draft_id = ?', [checked.reply, JSON.stringify(checked.citations), new Date().toISOString(), d.draft_id]);
@@ -85,12 +96,19 @@ router.patch('/drafts/:id', (req, res) => {
 router.post('/drafts/:id/send', wrap(async (req, res) => {
   const d = getDraft(req.params.id);
   if (d.status === 'sent') return res.json({ draft_id: d.draft_id, status: 'sent', replayed: true });
+  if (d.status === 'sending') throw httpError(409, 'This reply is already being sent');
   if (d.status !== 'draft') throw httpError(409, `Draft is ${d.status}`);
+  if (!String(d.body || '').trim()) throw httpError(400, 'Draft text cannot be empty');
   const ticket = db.get('SELECT * FROM tickets WHERE ticket_id = ?', [d.ticket_id]);
-  const resolve = req.body.resolve !== false;
+  const resolve = !req.body || req.body.resolve !== false;
+  // Claim the draft before any await so a double-click cannot post the reply twice.
+  db.run("UPDATE drafts SET status = 'sending' WHERE draft_id = ? AND status = 'draft'", [d.draft_id]);
   let external = null;
-  if (connectors.HELPDESKS.includes(ticket.channel) && ticket.source_ref) {
+  try {
     external = await connectors.pushReply(ticket, d.body, { resolve });
+  } catch (e) {
+    db.run("UPDATE drafts SET status = 'draft' WHERE draft_id = ?", [d.draft_id]);
+    throw e;
   }
   db.run("UPDATE drafts SET status = 'sent', reviewed_by = ?, updated_at = ? WHERE draft_id = ?", [req.user.email, new Date().toISOString(), d.draft_id]);
   tickets.addMessage(d.ticket_id, { author_type: 'agent', author: req.user.email, body: d.body, internal: false });
@@ -101,6 +119,7 @@ router.post('/drafts/:id/send', wrap(async (req, res) => {
 
 router.post('/drafts/:id/reject', (req, res) => {
   const d = getDraft(req.params.id);
+  if (d.status !== 'draft') throw httpError(409, `Only drafts can be rejected (this one is ${d.status})`);
   db.run("UPDATE drafts SET status = 'rejected', reviewed_by = ?, updated_at = ? WHERE draft_id = ?", [req.user.email, new Date().toISOString(), d.draft_id]);
   actions.addNote(d.ticket_id, req.user.email, `Draft rejected${req.body && req.body.reason ? `: ${req.body.reason}` : ''}.`);
   res.json({ draft_id: d.draft_id, status: 'rejected' });
@@ -124,7 +143,8 @@ router.post('/tool-actions', (req, res) => {
   const key = req.get('Idempotency-Key') || b.idempotency_key;
   let category;
   let flags = [];
-  if (b.ticket_id) {
+  if (!b.ticket_id) throw httpError(400, 'ticket_id is required: actions are always taken for a ticket');
+  {
     const t = db.get('SELECT triage_json FROM tickets WHERE ticket_id = ?', [b.ticket_id]);
     if (!t) throw httpError(404, `Ticket ${b.ticket_id} not found`);
     const tri = parseJson(t.triage_json, null);
@@ -154,7 +174,7 @@ router.get('/agent-runs', (req, res) => {
   const params = [];
   if (req.query.ticket_id) { where.push('ticket_id = ?'); params.push(req.query.ticket_id); }
   if (req.query.run_type) { where.push('run_type = ?'); params.push(req.query.run_type); }
-  const limit = Math.min(200, Number(req.query.limit) || 50);
+  const limit = Math.max(1, Math.min(200, Math.floor(Number(req.query.limit)) || 50));
   res.json(db.all(`SELECT * FROM agent_runs ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY created_at DESC LIMIT ${limit}`, params).map(agent.formatRun));
 });
 
@@ -167,6 +187,7 @@ router.get('/agent-runs/:id', (req, res) => {
 router.post('/agent-runs/:id/feedback', (req, res) => {
   const { rating } = req.body || {};
   if (!['up', 'down'].includes(rating)) throw httpError(400, 'rating must be up or down');
+  if (!db.get('SELECT run_id FROM agent_runs WHERE run_id = ?', [req.params.id])) throw httpError(404, `Run ${req.params.id} not found`);
   db.run('UPDATE agent_runs SET feedback = ? WHERE run_id = ?', [rating, req.params.id]);
   res.json({ run_id: req.params.id, feedback: rating });
 });

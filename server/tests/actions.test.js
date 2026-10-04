@@ -88,7 +88,7 @@ test('POST /tool-actions enforces idempotency keys', async () => {
 });
 
 test('coupons over the limit are blocked', async () => {
-  const r = await ctx.api('POST', '/api/tool-actions', { body: { tool_name: 'issue_coupon', idempotency_key: 'coupon-big',
+  const r = await ctx.api('POST', '/api/tool-actions', { body: { ticket_id: 'tkt_9002', tool_name: 'issue_coupon', idempotency_key: 'coupon-big',
     parameters: { customer_id: 'cus_1002', amount: 5000, reason: 'goodwill' } } });
   assert.strictEqual(r.body.action.status, 'blocked');
   assert.match(r.body.action.block_reason, /limit/);
@@ -105,7 +105,9 @@ test('coupon on the prompt-injection ticket is blocked', async () => {
 });
 
 test('missing required fields block a proposal', async () => {
-  const r = await ctx.api('POST', '/api/tool-actions', { body: { tool_name: 'create_replacement_order', idempotency_key: 'missing-1', parameters: { order_id: 'ord_5001' } } });
+  const r = await ctx.api('POST', '/api/tool-actions', { body: { ticket_id: 'tkt_9001', tool_name: 'create_replacement_order', idempotency_key: 'missing-1', parameters: { order_id: 'ord_5001' } } });
   assert.strictEqual(r.body.action.status, 'blocked');
   assert.match(r.body.action.block_reason, /Missing required fields/);
+  const noTicket = await ctx.api('POST', '/api/tool-actions', { body: { tool_name: 'issue_coupon', idempotency_key: 'no-ticket', parameters: {} } });
+  assert.strictEqual(noTicket.status, 400);
 });

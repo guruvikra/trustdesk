@@ -54,7 +54,7 @@ function TeamTab({ user }) {
   const [created, setCreated] = useState(null);
   const [busy, setBusy] = useState(false);
   const canInvite = ['admin', 'support_manager'].includes(user.role);
-  const load = () => api('/api/team').then(setTeam);
+  const load = () => api('/api/team').then(setTeam).catch(e => { setTeam([]); toast(e.message, 'error'); });
   useEffect(() => { load(); }, []);
 
   const invite = async () => {
@@ -156,8 +156,10 @@ function ModelDataTab({ user, ws, reload }) {
 export default function SettingsPage({ user, org, onOrgChange }) {
   const [tab, setTab] = useState('workspace');
   const [ws, setWs] = useState(null);
-  const load = () => api('/api/workspace').then(setWs);
+  const [error, setError] = useState('');
+  const load = () => api('/api/workspace').then(setWs).catch(e => setError(e.message));
   useEffect(() => { load(); }, []);
+  if (error) return <div className="callout red">{error}</div>;
   if (!ws) return <Spinner />;
   return (
     <div>

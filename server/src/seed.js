@@ -13,7 +13,7 @@ const DATA_DIR = path.resolve(__dirname, '../../data');
 const readJson = f => JSON.parse(fs.readFileSync(path.join(DATA_DIR, f), 'utf8'));
 
 const TABLES = ['tool_actions', 'drafts', 'agent_runs', 'ticket_messages', 'tickets', 'orders', 'customers', 'doc_chunks', 'documents',
-  'ingest_jobs', 'deflection_events', 'eval_runs', 'tool_catalog', 'users'];
+  'ingest_jobs', 'deflection_events', 'eval_runs', 'tool_catalog', 'users', 'automation_events', 'external_links'];
 // Integration credentials survive a workspace reset on purpose. Users live in the accounts store.
 
 function seedCatalogAndUsers() {
