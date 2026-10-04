@@ -7,7 +7,13 @@ function loadEnv() {
     if (!fs.existsSync(file)) continue;
     for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
       const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
-      if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+      if (!m || process.env[m[1]] !== undefined) continue;
+      let v = m[2];
+      // Quoted values are taken literally; unquoted values may end with an inline "# comment".
+      if (/^["'].*["']$/.test(v)) v = v.slice(1, -1);
+      else v = v.replace(/\s+#.*$/, '').trim();
+      // Empty values behave like "not set" (e.g. LLM_PROVIDER= or ZENDESK_CLIENT_ID=).
+      if (v !== '') process.env[m[1]] = v;
     }
   }
 }
