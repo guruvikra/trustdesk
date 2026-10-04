@@ -11,6 +11,7 @@ function AddSource({ onIngested }) {
   const [files, setFiles] = useState([]);
   const [url, setUrl] = useState('');
   const [crawl, setCrawl] = useState(true);
+  const [maxPages, setMaxPages] = useState(50);
   const [paste, setPaste] = useState({ title: '', doc_id: '', content: '' });
   const [job, setJob] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -33,7 +34,7 @@ function AddSource({ onIngested }) {
         form.append('visibility', visibility);
         out = await api('/api/documents/ingest', { method: 'POST', form });
       } else if (tab === 'url') {
-        out = await api('/api/documents/ingest', { method: 'POST', body: { url, visibility, crawl, max_pages: 20 } });
+        out = await api('/api/documents/ingest', { method: 'POST', body: { url, visibility, crawl, max_pages: maxPages } });
       } else {
         out = await api('/api/documents/ingest', { method: 'POST', body: { documents: [{ ...paste, doc_id: paste.doc_id || undefined, visibility }] } });
       }
@@ -60,7 +61,13 @@ function AddSource({ onIngested }) {
       {tab === 'url' && (
         <div className="stack" style={{ gap: 8 }}>
           <input className="input" placeholder="https://docs.yourcompany.com" value={url} onChange={e => setUrl(e.target.value)} />
-          <label className="row small"><input type="checkbox" checked={crawl} onChange={e => setCrawl(e.target.checked)} /> Also import linked pages in the same section (up to 20 pages, one document each)</label>
+          <div className="row small wrap">
+            <label className="row"><input type="checkbox" checked={crawl} onChange={e => setCrawl(e.target.checked)} /> Also import linked pages in the same section, up to</label>
+            <select className="select" style={{ width: 90, padding: '3px 6px' }} value={maxPages} disabled={!crawl} onChange={e => setMaxPages(Number(e.target.value))}>
+              {[20, 50, 100, 150].map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <span>pages (one document each)</span>
+          </div>
         </div>
       )}
       {tab === 'paste' && (
